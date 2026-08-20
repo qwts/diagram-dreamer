@@ -75,13 +75,24 @@ function pseudoSegment(text: string): string {
 }
 
 export function pseudoString(value: string): string {
-  const transformed = value
-    .split(PROTECTED)
+  // Split once and use the same segments for both passes. Odd indices are the
+  // captured protected runs; even indices are the free text. (Stripping the
+  // protected runs with a second `replace` instead would be the same thing said
+  // twice, and reads as a half-hearted tag sanitiser to anything scanning for
+  // one — which is not what this is: the result is only ever a character count.)
+  const segments = value.split(PROTECTED);
+  const transformed = segments
     .map((part, index) => (index % 2 === 1 ? part : pseudoSegment(part)))
     .join("");
 
-  // Expand by roughly a third, the usual worst case for en → de/fi.
-  const letters = value.replace(PROTECTED, "").replace(/[^A-Za-z]/g, "").length;
+  // Expand by roughly a third, the usual worst case for en → de/fi. Only free
+  // text counts: ICU placeholders are substituted at runtime, so their width
+  // has nothing to do with the width of the English string.
+  const letters = segments.reduce(
+    (count, part, index) =>
+      index % 2 === 1 ? count : count + (part.match(/[A-Za-z]/g)?.length ?? 0),
+    0,
+  );
   const padding = PAD.repeat(Math.max(1, Math.ceil(letters * 0.35)));
   return `⟦${transformed}${padding}⟧`;
 }
