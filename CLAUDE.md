@@ -5,6 +5,7 @@
 A Lovable-generated **UI shell** for a Mermaid document renderer. It is presentation-only by contract: props-driven components, i18next strings, Vellum design tokens, fixture-driven states. It becomes the renderer layer of an Electron app inside a monorepo (see SPEC §4). You are hardening it to production, not extending its scope.
 
 Authoritative documents (keep in `docs/`):
+
 - `docs/SPEC.md` — the design document. §4 architecture, §9 design system, §10 test seams, §11 defines your role.
 - `DESIGN.md` — visual identity, Vellum. Tokens are law; prose Do's/Don'ts are binding.
 
@@ -34,9 +35,11 @@ Authoritative documents (keep in `docs/`):
 - **Dead weight:** SEO artifacts, unused shadcn components, unused routes/helpers (typed-env helpers etc. were declined — remove if present).
 
 ### Phase 1 — Fix to contract
+
 Work the audit findings. Priority: SSR removal → i18n → routing (memory history param) → tokens → strings/logical props → fonts → dead-weight removal. Small commits, one concern each.
 
 ### Phase 2 — Gates (make them pass, then make them required)
+
 - Playwright: for each `?state=` fixture — renders, no console errors, key testids present.
 - axe-core run per fixture state, zero violations at WCAG 2.1 AA.
 - Pseudo-localization build: no raw keys, no clipped critical labels, RTL smoke (dir=rtl renders, panes mirror).
@@ -44,12 +47,15 @@ Work the audit findings. Priority: SSR removal → i18n → routing (memory hist
 - Type-check and build clean with zero warnings treated as acceptable.
 
 ### Phase 3 — Monorepo migration
+
 Move to `apps/electron/renderer` per SPEC §4 layout. Extract shared shell types (`DocumentModel`, `DiagramBlock`, `AgentSession`, `PermissionRequest`, `DiffPreview`, `Diagnostic`) toward `packages/core` contracts — types only, no logic yet. Set up workspace tooling (pnpm workspaces or turbo) and CI running the Phase 2 gates.
 
 ### Definition of done (M1)
+
 All gates green in CI; audit findings resolved or explicitly waived in AUDIT.md; repo in monorepo layout; zero Lovable-authored logic outside the presentation layer; a fresh clone runs fully offline.
 
 ## Working rules
+
 - Estimate before large refactors; prefer many small verified steps.
 - Never delete a fixture state, testid, or i18n key without noting it in the commit body.
 - Anything ambiguous about visual or interaction design: DESIGN.md prose wins; if still ambiguous, flag, don't guess.

@@ -49,17 +49,17 @@ A presentation-only UI shell for a desktop Mermaid document renderer. It is desi
 
 ## 2. Tech Stack
 
-| Layer | Technology |
-|-------|--------------|
-| Framework | React 19 + TanStack Start v1 + TanStack Router |
-| Build tool | Vite 8 via `@lovable.dev/vite-tanstack-config` |
-| Styling | Tailwind CSS v4 (`src/styles.css` with `@theme inline`) |
-| Primitives | shadcn/ui + Radix (dialog, dropdown, select, tooltip, etc.) |
-| Panels | `react-resizable-panels` |
-| Icons | `lucide-react` |
-| i18n | `i18next` + `react-i18next` |
-| Fonts | `@fontsource-variable/inter`, `@fontsource-variable/jetbrains-mono` |
-| Type safety | TypeScript 5.8 with `exactOptionalPropertyTypes` enabled |
+| Layer       | Technology                                                          |
+| ----------- | ------------------------------------------------------------------- |
+| Framework   | React 19 + TanStack Start v1 + TanStack Router                      |
+| Build tool  | Vite 8 via `@lovable.dev/vite-tanstack-config`                      |
+| Styling     | Tailwind CSS v4 (`src/styles.css` with `@theme inline`)             |
+| Primitives  | shadcn/ui + Radix (dialog, dropdown, select, tooltip, etc.)         |
+| Panels      | `react-resizable-panels`                                            |
+| Icons       | `lucide-react`                                                      |
+| i18n        | `i18next` + `react-i18next`                                         |
+| Fonts       | `@fontsource-variable/inter`, `@fontsource-variable/jetbrains-mono` |
+| Type safety | TypeScript 5.8 with `exactOptionalPropertyTypes` enabled            |
 
 ## 3. Directory Structure
 
@@ -98,10 +98,10 @@ This lets the same code run in a browser and inside a `file://` Electron shell w
 
 ### Routes
 
-| Route | File | Purpose |
-|-------|------|---------|
-| `/` | `src/routes/index.tsx` | Workspace with dev fixture switcher via `?doc=` and `?agent=` search params. |
-| `/welcome` | `src/routes/welcome.tsx` | Landing page with recent files and templates. |
+| Route      | File                     | Purpose                                                                      |
+| ---------- | ------------------------ | ---------------------------------------------------------------------------- |
+| `/`        | `src/routes/index.tsx`   | Workspace with dev fixture switcher via `?doc=` and `?agent=` search params. |
+| `/welcome` | `src/routes/welcome.tsx` | Landing page with recent files and templates.                                |
 
 `__root.tsx` provides the root layout, `ThemeProvider`, `QueryClientProvider`, and `HeadContent` for meta tags.
 
@@ -311,10 +311,10 @@ i18n.use(initReactI18next).init({
 `src/testids.ts` exports a single registry of constants in `region.component.element` form. Every `data-testid` attribute in the app must import from this file. Examples:
 
 ```ts
-workspace.toolbar.root
-preview.diagramFrame.root
-agent.prompt.input
-settings.dialog.theme
+workspace.toolbar.root;
+preview.diagramFrame.root;
+agent.prompt.input;
+settings.dialog.theme;
 ```
 
 ## 11. Fixtures & Dev State Switcher
@@ -348,14 +348,14 @@ In development, `src/components/dev/StateSwitcher.tsx` is mounted on the workspa
 
 The shell leaves explicit seams for future work:
 
-| Future system | Integration point |
-|---------------|-------------------|
-| CodeMirror editor | `EditorHost` scroll container / mount slot |
-| Mermaid renderer | `DiagramFrame` mount slot + zoom footer |
-| File system | `TopToolbar` export callbacks, `WelcomePage` open file action |
-| Agent transport | `AgentPanel` `onSend`, `onConnect`, `onResolvePermission` callbacks |
-| Diff application | `DiffPreviewCard` `onAccept` / `onReject` callbacks |
-| Undo/redo | external state manager feeding `document` props |
+| Future system     | Integration point                                                   |
+| ----------------- | ------------------------------------------------------------------- |
+| CodeMirror editor | `EditorHost` scroll container / mount slot                          |
+| Mermaid renderer  | `DiagramFrame` mount slot + zoom footer                             |
+| File system       | `TopToolbar` export callbacks, `WelcomePage` open file action       |
+| Agent transport   | `AgentPanel` `onSend`, `onConnect`, `onResolvePermission` callbacks |
+| Diff application  | `DiffPreviewCard` `onAccept` / `onReject` callbacks                 |
+| Undo/redo         | external state manager feeding `document` props                     |
 
 ## 14. Changelog Notes
 

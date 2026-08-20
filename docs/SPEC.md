@@ -9,7 +9,7 @@
 
 ## 1. Purpose
 
-A production-grade renderer for *documents* containing Mermaid diagrams — markdown files with fenced ```mermaid blocks — with first-class agentic capabilities. Agents (Claude Code, Gemini CLI, or any ACP-speaking agent) connect over the Agent Client Protocol to generate, explain, refactor, and lint diagrams, and eventually to produce repo-aware architecture diagrams.
+A production-grade renderer for _documents_ containing Mermaid diagrams — markdown files with fenced ```mermaid blocks — with first-class agentic capabilities. Agents (Claude Code, Gemini CLI, or any ACP-speaking agent) connect over the Agent Client Protocol to generate, explain, refactor, and lint diagrams, and eventually to produce repo-aware architecture diagrams.
 
 The UI shell is generated with Lovable, then hardened to production by Claude Code against the contracts defined in this document.
 
@@ -87,11 +87,11 @@ The renderer implements the **client** (editor) role of the Agent Client Protoco
 
 ### 7.1 Transport matrix
 
-| Deployment | Transport | Status |
-|---|---|---|
-| Electron | Main spawns agent subprocess; stdio ↔ contextBridge IPC ↔ renderer | **MVP** |
-| Hosted web | Browser ↔ WSS to 127.0.0.1 bridge daemon ↔ stdio ↔ agent | Designed, deferred |
-| Local web | Same-origin WS to bridge | Deferred |
+| Deployment | Transport                                                          | Status             |
+| ---------- | ------------------------------------------------------------------ | ------------------ |
+| Electron   | Main spawns agent subprocess; stdio ↔ contextBridge IPC ↔ renderer | **MVP**            |
+| Hosted web | Browser ↔ WSS to 127.0.0.1 bridge daemon ↔ stdio ↔ agent           | Designed, deferred |
+| Local web  | Same-origin WS to bridge                                           | Deferred           |
 
 `packages/acp-client` depends only on a `Transport` interface (`send`, `onMessage`, lifecycle). Electron ships the IPC transport; the bridge transport slots in later without touching client logic.
 
@@ -100,7 +100,7 @@ The renderer implements the **client** (editor) role of the Agent Client Protoco
 - `initialize` / capability negotiation; `session/new`, `session/prompt`, cancellation.
 - Render streaming session updates: agent plan, tool-call progress, text chunks.
 - **Permission UI:** agents request permission for tool calls; the renderer needs a non-blocking approval surface with per-session "always allow" scoping. This is the largest UI lift in the agentic feature set.
-- **Filesystem mediation — the elegant part:** in ACP the *client* serves `fs/read`/`fs/write`. The renderer presents the in-memory document model as the workspace. Consequences:
+- **Filesystem mediation — the elegant part:** in ACP the _client_ serves `fs/read`/`fs/write`. The renderer presents the in-memory document model as the workspace. Consequences:
   - Agent edits arrive as writes through the command layer → free undo, diff preview, and streaming preview updates.
   - The agent never needs real disk access for document-scoped tasks, which is exactly what makes the future hosted mode viable.
   - Workspace scope is a policy decision: MVP exposes the open document (+ optionally its folder, permission-gated), nothing else.
@@ -119,6 +119,7 @@ Two integration points, kept distinct:
 ## 8. Feature Tiers
 
 **MVP (Electron):**
+
 - Split-pane source editor + live preview, per-block rendering, sync scroll
 - Error diagnostics with line mapping; resilient per-block failure
 - Pan/zoom on diagrams; export SVG/PNG/clipboard
@@ -127,11 +128,13 @@ Two integration points, kept distinct:
 - ACP: connect to Claude Code, prompt on selection/block/document, streaming edits with diff preview, permission UI
 
 **V1:**
+
 - Templates/diagram catalog; custom theme variables; PDF export
 - Multi-document tabs; frontmatter config UI
 - Agentic: explain-this-diagram, refactor/normalize, lint agent (style + semantic checks)
 
 **V2 / differentiators:**
+
 - Repo-aware generation: agent reads a codebase, emits architecture/sequence/ER diagrams into a document (permission-gated folder workspace)
 - Hosted web + bridge; share links (sandboxed render path already assumes untrusted input)
 - MCP tool surface (seam activation)
@@ -141,12 +144,14 @@ Two integration points, kept distinct:
 Tokens are authored in the **DESIGN.md format** (google-labs-code/design.md): YAML tokens + prose rationale in one agent-readable file. `packages/design-tokens` holds `DESIGN.md` as the single source of truth plus generated exports — `export --format css-tailwind` produces the Tailwind v4 theme the Lovable shell consumes. CI gates: `design.md lint` (broken refs, WCAG contrast on component pairs) and `design.md diff` as a token-regression check on any PR touching it. The format is alpha — pin the CLI version. Note its component-token vocabulary is narrow (no motion/elevation/focus tokens); those invariants live in the DESIGN.md prose, which agents follow but the linter can't verify — the axe/Playwright gates cover that gap. Lovable consumes tokens, never invents them.
 
 **Accessibility (WCAG 2.1 AA):**
+
 - Semantic landmarks and roles across the shell; full keyboard operability including pane focus traversal and diagram pan/zoom via keyboard
 - Diagrams get accessible names/descriptions (Mermaid `accTitle`/`accDescr` surfaced and agent-fillable — a lint-agent rule)
 - Contrast enforced at the token level; visible focus states; reduced-motion respect
 - axe-core in CI as a merge gate, manual screen-reader pass per milestone
 
 **i18n:**
+
 - Zero hardcoded strings from the first Lovable generation; i18next with ICU message format
 - RTL layout support (logical CSS properties only — enforced by lint); locale-aware dates/numbers
 - Pseudo-localization build target to catch truncation/concatenation in CI
@@ -160,19 +165,19 @@ The seams are contracts, specified before Lovable generates anything:
 3. **Render pipeline behind an interface:** preview tests can swap in a synchronous fake renderer; visual regression tests use the real one with pinned mermaid versions.
 4. Storybook per shell component (a11y addon on); MSW for any network; Lighthouse + axe budgets as merge gates.
 
-| Layer | Tooling |
-|---|---|
-| Unit (core, acp-client) | Vitest |
-| Component | Storybook + testing-library + axe |
-| E2E incl. agentic flows | Playwright + transcript player |
-| Visual regression | Playwright screenshots, pinned mermaid |
-| A11y/perf gates | axe-core, Lighthouse CI |
+| Layer                   | Tooling                                |
+| ----------------------- | -------------------------------------- |
+| Unit (core, acp-client) | Vitest                                 |
+| Component               | Storybook + testing-library + axe      |
+| E2E incl. agentic flows | Playwright + transcript player         |
+| Visual regression       | Playwright screenshots, pinned mermaid |
+| A11y/perf gates         | axe-core, Lighthouse CI                |
 
 ## 11. Lovable → Claude Code Handoff Contract
 
 **What Lovable produces (and what survives):** screens/layout, component shells, token application. **What Claude Code rewrites:** state management, async/data layer, IPC wiring, anything touching `packages/*`.
 
-The Lovable prompt is *derived from this doc* and scoped to the shell: screen inventory, design tokens, the testid registry, ARIA/i18n rules ("no literal strings; every interactive element keyboard-reachable"), and an explicit constraint: *UI state only — no data fetching, no business logic, props-driven components*.
+The Lovable prompt is _derived from this doc_ and scoped to the shell: screen inventory, design tokens, the testid registry, ARIA/i18n rules ("no literal strings; every interactive element keyboard-reachable"), and an explicit constraint: _UI state only — no data fetching, no business logic, props-driven components_.
 
 Claude Code executes against a six-file package (pattern proven on Cartograph): CLAUDE.md, this SPEC, ADRs, MILESTONES, US backlog, tracker CSV. Acceptance criteria per screen reference the testid registry and the a11y/i18n gates, so "production level" is measurable, not vibes.
 
@@ -186,18 +191,18 @@ Claude Code executes against a six-file package (pattern proven on Cartograph): 
 
 ## 13. Risks
 
-| Risk | Mitigation |
-|---|---|
-| Mermaid XSS / CVE history | Sandboxed iframe, `securityLevel: strict`, no same-origin |
-| Mermaid version breakage | Per-document pinning, bundled versions, visual regression on pinned set |
-| Lovable output quality | Shell-only scope, contract-driven prompt, planned Claude Code rewrite of non-UI layers |
-| ACP client underestimation | Permission UI and streaming-update rendering sized as their own milestone; transcript player built first so the UI is testable while the real integration lands |
-| Bridge scope creep | Deferred entirely; interface designed, zero code in MVP |
-| Repo-aware generation hallucination | Same risk class as Cartograph US-2002; keep behind the seam, treat as V2 research |
+| Risk                                | Mitigation                                                                                                                                                      |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mermaid XSS / CVE history           | Sandboxed iframe, `securityLevel: strict`, no same-origin                                                                                                       |
+| Mermaid version breakage            | Per-document pinning, bundled versions, visual regression on pinned set                                                                                         |
+| Lovable output quality              | Shell-only scope, contract-driven prompt, planned Claude Code rewrite of non-UI layers                                                                          |
+| ACP client underestimation          | Permission UI and streaming-update rendering sized as their own milestone; transcript player built first so the UI is testable while the real integration lands |
+| Bridge scope creep                  | Deferred entirely; interface designed, zero code in MVP                                                                                                         |
+| Repo-aware generation hallucination | Same risk class as Cartograph US-2002; keep behind the seam, treat as V2 research                                                                               |
 
 ## 14. Milestones
 
-- **M0** — Monorepo, tokens, testid registry, transcript-player harness, CI gates (axe/Lighthouse/pseudo-loc/design.md lint+diff). *Seams before shell.*
+- **M0** — Monorepo, tokens, testid registry, transcript-player harness, CI gates (axe/Lighthouse/pseudo-loc/design.md lint+diff). _Seams before shell._
 - **M1** — Lovable shell generation against the contract; Claude Code hardening pass; static rendering pipeline (no agents).
 - **M2** — Editor/preview complete: diagnostics, export, theming, version pinning.
 - **M3** — ACP MVP: Electron transport, Claude Code agent, permission UI, streaming edits + diff, fs mediation over the document model.
