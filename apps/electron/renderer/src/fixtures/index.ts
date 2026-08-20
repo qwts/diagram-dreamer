@@ -1,103 +1,78 @@
+import { parseDocument, toDocumentModel } from "@vellum/core";
 import type { AgentSession, DocumentModel, DocumentTemplate, RecentFile } from "@/types/shell";
 
-const source = [
-  "# Deployment architecture",
-  "",
-  "The renderer talks to the agent through a transport seam.",
-  "",
-  "```mermaid",
-  "flowchart LR",
-  "  R[Renderer UI shell] --> C[core]",
-  "  R --> A[acp-client]",
-  "  A --> M[Main process]",
-  "```",
-  "",
-  "## Session handshake",
-  "",
-  "```mermaid",
-  "sequenceDiagram",
-  "  Renderer->>Main: session/new",
-  "  Main->>Agent: initialize",
-  "  Agent-->>Renderer: session/update",
-  "```",
-  "",
-  "## Document lifecycle",
-  "",
-  "```mermaid",
-  "stateDiagram-v2",
-  "  [*] --> Draft",
-  "  Draft --> Rendering",
-  "  Rendering --> Ready",
-  "```",
-];
-
 /**
- * A block's Mermaid source, sliced out of the document rather than restated.
+ * Fixture documents are real Markdown, parsed by the real parser.
  *
- * `startLine`/`endLine` are the fence lines themselves and are 1-based, so the
- * body is everything between them. Deriving it means the editor pane and the
- * rendered diagram cannot disagree — a fixture whose preview text said one
- * thing while its diagram drew another would make every render test a lie.
+ * They used to be hand-built models: a `sourcePreview` array beside a `blocks`
+ * array whose `startLine`/`endLine` were maintained by counting. Every fixture
+ * was then an assertion that someone had counted correctly, and a rendered
+ * diagram could disagree with the text shown next to it without anything
+ * noticing.
+ *
+ * Parsing them instead means `@vellum/core`'s parser is exercised by all 88
+ * gates rather than only by its own unit tests, and a line number in a
+ * diagnostic is one the parser produced — the same path a real document takes.
  */
-function blockSource(startLine: number, endLine: number, lines: string[] = source): string {
-  return lines.slice(startLine, endLine - 1).join("\n");
-}
+const architecture = `---
+mermaid: 11.17.0
+---
+# Deployment architecture
 
-export const emptyDocument: DocumentModel = {
-  id: "doc-empty",
-  fileName: "untitled.md",
-  filePath: "~/documents/untitled.md",
-  saveState: "saved",
-  lineCount: 3,
-  sourcePreview: ["# Untitled", "", ""],
-  blocks: [],
-  diagnostics: [],
-  cursor: { line: 1, column: 1 },
-  // Matches the Mermaid actually bundled with the sandbox. Once a real
-  // document model exists this comes from the sandbox handshake, which
-  // reports its own version, rather than from a fixture literal.
-  mermaidVersion: "11.17.0",
-};
+The renderer talks to the agent through a transport seam.
+
+\`\`\`mermaid
+flowchart LR
+  accTitle: Renderer dependencies
+  R[Renderer UI shell] --> C[core]
+  R --> A[acp-client]
+  A --> M[Main process]
+\`\`\`
+
+## Session handshake
+
+\`\`\`mermaid
+sequenceDiagram
+  accTitle: Session handshake
+  Renderer->>Main: session/new
+  Main->>Agent: initialize
+  Agent-->>Renderer: session/update
+\`\`\`
+
+## Document lifecycle
+
+\`\`\`mermaid
+stateDiagram-v2
+  accTitle: Document lifecycle
+  [*] --> Draft
+  Draft --> Rendering
+  Rendering --> Ready
+\`\`\`
+`;
+
+/** Document line of `Renderer->>Main`, the line the `broken` fixture mangles. */
+const HANDSHAKE_ARROW = 21;
+
+export const emptyDocument: DocumentModel = toDocumentModel(
+  {
+    id: "doc-empty",
+    fileName: "untitled.md",
+    filePath: "~/documents/untitled.md",
+  },
+  parseDocument("# Untitled\n\n"),
+);
 
 export const multiBlockDocument: DocumentModel = {
-  id: "doc-multi",
-  fileName: "architecture.md",
-  filePath: "~/projects/vellum/docs/architecture.md",
-  saveState: "unsaved",
-  lineCount: source.length,
-  sourcePreview: source,
-  blocks: [
+  ...toDocumentModel(
     {
-      id: "block-1",
-      diagramType: "flowchart",
-      startLine: 5,
-      endLine: 10,
-      state: "ready",
-      source: blockSource(5, 10),
+      id: "doc-multi",
+      fileName: "architecture.md",
+      filePath: "~/projects/vellum/docs/architecture.md",
+      saveState: "unsaved",
     },
-    {
-      id: "block-2",
-      diagramType: "sequenceDiagram",
-      startLine: 14,
-      endLine: 19,
-      state: "ready",
-      source: blockSource(14, 19),
-    },
-    {
-      id: "block-3",
-      diagramType: "stateDiagram-v2",
-      startLine: 23,
-      endLine: 28,
-      state: "ready",
-      source: blockSource(23, 28),
-    },
-  ],
-  diagnostics: [],
-  cursor: { line: 6, column: 12 },
-  // Matches the Mermaid actually bundled with the sandbox. Once a real
-  // document model exists this comes from the sandbox handshake, which
-  // reports its own version, rather than from a fixture literal.
-  mermaidVersion: "11.17.0",
+    parseDocument(architecture),
+  ),
+  cursor: { line: 9, column: 12 },
 };
 
 export const failedBlockDocument: DocumentModel = {
@@ -114,7 +89,7 @@ export const failedBlockDocument: DocumentModel = {
         severity: "error",
         messageKey: "preview.diagnostic.parse",
         messageValues: { token: "-->>" },
-        line: 16,
+        line: HANDSHAKE_ARROW,
       },
     },
     {
@@ -124,7 +99,7 @@ export const failedBlockDocument: DocumentModel = {
         id: "diag-2",
         severity: "warning",
         messageKey: "preview.diagnostic.lintLongLabel",
-        line: 7,
+        line: 11,
       },
     },
   ],
@@ -134,13 +109,13 @@ export const failedBlockDocument: DocumentModel = {
       severity: "error",
       messageKey: "preview.diagnostic.parse",
       messageValues: { token: "-->>" },
-      line: 16,
+      line: HANDSHAKE_ARROW,
     },
     {
       id: "diag-2",
       severity: "warning",
       messageKey: "preview.diagnostic.lintLongLabel",
-      line: 7,
+      line: 11,
     },
   ],
 };
@@ -166,7 +141,7 @@ export const warnedDocument: DocumentModel = {
         id: "diag-w1",
         severity: "warning",
         messageKey: "preview.diagnostic.lintLongLabel",
-        line: 7,
+        line: 11,
       },
     },
   ],
@@ -175,9 +150,40 @@ export const warnedDocument: DocumentModel = {
       id: "diag-w1",
       severity: "warning",
       messageKey: "preview.diagnostic.lintLongLabel",
-      line: 7,
+      line: 11,
     },
   ],
+};
+
+/**
+ * Syntactically invalid Mermaid in an otherwise healthy document.
+ *
+ * The point is the *disagreement*: every block is `state: "ready"` and the
+ * model carries no diagnostic, because nothing has tried to render yet. Only
+ * Mermaid knows one block is broken, and it only finds out at render time. That
+ * is the branch SPEC §6 describes — "the renderer never white-screens on a bad
+ * block" — and no fixture reached it before, because `failed` hands the shell a
+ * diagnostic that was decided for it.
+ *
+ * Mangled through the same parser as everything else, so the editor text and
+ * the failing diagram cannot drift apart.
+ */
+const brokenMarkdown = architecture
+  .split("\n")
+  .map((line, index) => (index === HANDSHAKE_ARROW - 1 ? "  Renderer ->< Main: nope" : line))
+  .join("\n");
+
+export const brokenDocument: DocumentModel = {
+  ...toDocumentModel(
+    {
+      id: "doc-broken",
+      fileName: "broken.md",
+      filePath: "~/projects/vellum/docs/broken.md",
+      saveState: "unsaved",
+    },
+    parseDocument(brokenMarkdown),
+  ),
+  cursor: { line: HANDSHAKE_ARROW, column: 1 },
 };
 
 const baseItems: AgentSession["items"] = [
@@ -190,6 +196,17 @@ export const agentDisconnected: AgentSession = {
   items: [],
 };
 
+/**
+ * The block the agent fixtures point at, and the lines it occupies.
+ *
+ * Read from the parsed document rather than written out, because block ids are
+ * content hashes now and the line numbers move whenever the fixture prose does.
+ * A literal would go stale the first time either changed, and the context chip
+ * would name a block that is not in the document.
+ */
+const contextBlock = multiBlockDocument.blocks[0]!;
+const contextBlockId = contextBlock.id;
+
 export const agentIdle: AgentSession = {
   state: "idle",
   agentName: "Claude Code",
@@ -199,7 +216,7 @@ export const agentIdle: AgentSession = {
 export const agentStreaming: AgentSession = {
   state: "streaming",
   agentName: "Claude Code",
-  contextBlockId: "block-1",
+  contextBlockId,
   items: [
     ...baseItems,
     { kind: "text", id: "item-2", bodyKey: "agent.message.planIntro" },
@@ -224,7 +241,7 @@ export const agentStreaming: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "running",
     },
   ],
@@ -242,14 +259,14 @@ export const agentPermissionPending: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "pending",
     },
   ],
   permission: {
     id: "perm-1",
     toolName: "fs/write",
-    targetSummary: "docs/architecture.md — replace lines 5-10",
+    targetSummary: `docs/architecture.md — replace lines ${contextBlock.startLine}-${contextBlock.endLine}`,
   },
 };
 
@@ -293,7 +310,7 @@ export const agentPermissionResolved: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "success",
     },
   ],
@@ -367,32 +384,6 @@ export const templates: DocumentTemplate[] = [
     diagramType: "gantt",
   },
 ];
-
-/**
- * Syntactically invalid Mermaid in an otherwise healthy document.
- *
- * The point is the *disagreement*: every block is `state: "ready"` and the
- * model carries no diagnostic, because nothing has tried to render yet. Only
- * Mermaid knows block-2 is broken, and it only finds out at render time. That
- * is the branch SPEC §6 describes — "the renderer never white-screens on a bad
- * block" — and no fixture reached it before, because `failed` hands the shell a
- * diagnostic that was decided for it.
- */
-const brokenSource = source.map((line, index) =>
-  index === 15 ? "  Renderer ->< Main: not an arrow" : line,
-);
-
-export const brokenDocument: DocumentModel = {
-  ...multiBlockDocument,
-  id: "doc-broken",
-  fileName: "broken.md",
-  sourcePreview: brokenSource,
-  blocks: [
-    multiBlockDocument.blocks[0]!,
-    { ...multiBlockDocument.blocks[1]!, source: blockSource(14, 19, brokenSource) },
-    multiBlockDocument.blocks[2]!,
-  ],
-};
 
 export const documentFixtures = {
   empty: emptyDocument,

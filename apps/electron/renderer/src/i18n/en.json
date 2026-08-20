@@ -58,11 +58,18 @@
       "format": "Format document"
     },
     "gutter": {
-      "label": "Line numbers and diagnostics",
       "errorBadge": "Error on line {line}",
       "warningBadge": "Warning on line {line}"
     },
-    "placeholder": "The document editor mounts here."
+    "placeholder": "Start typing, or paste a Mermaid diagram.",
+    "content": {
+      "label": "Source of {fileName}"
+    },
+    "diagnostics": {
+      "label": "Diagram diagnostics",
+      "entry": "{label}. {message}",
+      "none": "No diagram diagnostics"
+    }
   },
   "preview": {
     "title": "Preview",
@@ -91,7 +98,8 @@
     "error": {
       "title": "This diagram could not be rendered",
       "mermaid": "Mermaid could not render this block: {message}",
-      "line": "Line {line}"
+      "line": "Line {line}",
+      "noLine": "Error"
     },
     "warning": {
       "title": "This diagram rendered with warnings"

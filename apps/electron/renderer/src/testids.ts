@@ -39,6 +39,7 @@ export const testIds = {
     errorBadge: "editor.gutter.error-badge",
     scrollContainer: "editor.host.scroll-container",
     mountSlot: "editor.host.mount-slot",
+    announcer: "editor.host.announcer",
   },
   preview: {
     root: "preview.pane.root",

@@ -10,6 +10,8 @@ interface PreviewPaneProps {
   onExportSvg?: ((blockId: string) => void) | undefined;
   onExportPng?: ((blockId: string) => void) | undefined;
   onAskAgent?: ((blockId: string) => void) | undefined;
+  onRenderDiagnostic?:
+    ((blockId: string, failure: { message: string; line: number } | null) => void) | undefined;
   /** Document frontmatter's Mermaid theme, passed through to every frame. */
   theme?: string | undefined;
 }

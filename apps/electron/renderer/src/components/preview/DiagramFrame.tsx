@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Bot,
@@ -39,6 +39,19 @@ interface DiagramFrameProps {
   onExportSvg?: ((blockId: string) => void) | undefined;
   onExportPng?: ((blockId: string) => void) | undefined;
   onAskAgent?: ((blockId: string) => void) | undefined;
+  /**
+   * Reports what the sandbox found, so a failure the renderer discovers can
+   * reach the gutter and the status bar. Only Mermaid knows a block is broken,
+   * and it only finds out at render time — without this the preview shows a
+   * red card while the rest of the workspace reports a clean document.
+   *
+   * `null` clears the block's finding. A failure with no line is *not*
+   * reported: a sandbox that will not start says nothing about the document,
+   * and filing it as a document diagnostic would point the reader at source
+   * that is fine.
+   */
+  onRenderDiagnostic?:
+    ((blockId: string, failure: { message: string; line: number } | null) => void) | undefined;
   /** Mermaid theme for the whole document (SPEC §5 frontmatter). */
   theme?: string | undefined;
 }
@@ -54,6 +67,7 @@ export function DiagramFrame({
   onExportSvg,
   onExportPng,
   onAskAgent,
+  onRenderDiagnostic,
   theme,
 }: DiagramFrameProps) {
   const { t } = useTranslation();
@@ -107,6 +121,19 @@ export function DiagramFrame({
     setZoom(Math.max(ZOOM_MIN, Math.min(100, ratio)));
   };
 
+  useEffect(() => {
+    if (!onRenderDiagnostic) return;
+    if (surface.status === "failed") {
+      if (surface.line === undefined) return;
+      onRenderDiagnostic(block.id, {
+        message: surface.message,
+        line: block.startLine + surface.line,
+      });
+      return;
+    }
+    if (surface.status === "ready") onRenderDiagnostic(block.id, null);
+  }, [onRenderDiagnostic, block.id, block.startLine, surface]);
+
   const severity = block.diagnostic?.severity ?? "error";
   const isWarning = severity === "warning";
 
@@ -129,7 +156,10 @@ export function DiagramFrame({
   const liveLine =
     surface.status === "failed" && surface.line !== undefined
       ? block.startLine + surface.line
-      : block.startLine;
+      : undefined;
+
+  /** The line the caption chip and the card point at, if either can point anywhere. */
+  const failureLine = modelFailed ? (block.diagnostic?.line ?? block.startLine) : liveLine;
 
   return (
     <article
@@ -161,9 +191,9 @@ export function DiagramFrame({
               }`}
             >
               <CircleAlert className="size-3.5" aria-hidden="true" />
-              {t("preview.error.line", {
-                line: modelFailed ? (block.diagnostic?.line ?? block.startLine) : liveLine,
-              })}
+              {failureLine === undefined
+                ? t("preview.error.noLine")
+                : t("preview.error.line", { line: failureLine })}
             </span>
           ) : null}
         </div>
@@ -225,7 +255,7 @@ export function DiagramFrame({
           // in a translated sentence is honest; pretending the text itself is
           // localisable would not be.
           message={t("preview.error.mermaid", { message: surface.message })}
-          line={liveLine}
+          {...(liveLine !== undefined && { line: liveLine })}
         />
       ) : null}
 
