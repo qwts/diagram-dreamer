@@ -77,15 +77,19 @@ export function SettingsDialog({
           </fieldset>
 
           <div>
-            <label
-              htmlFor="settings-mermaid-version"
+            {/* Radix renders the trigger as <button role="combobox">, which a
+                <label for> cannot name — hence aria-labelledby rather than
+                relying on the label association (axe aria-input-field-name). */}
+            <span
+              id="settings-mermaid-version-label"
               className="mb-xs block text-body-sm font-medium text-ink"
             >
               {t("settings.mermaidVersion.label")}
-            </label>
+            </span>
             <Select value={mermaidVersion} onValueChange={onMermaidVersionChange}>
               <SelectTrigger
                 id="settings-mermaid-version"
+                aria-labelledby="settings-mermaid-version-label"
                 data-testid={testIds.settings.mermaidVersion}
               >
                 <SelectValue />
@@ -101,14 +105,18 @@ export function SettingsDialog({
           </div>
 
           <div>
-            <label
-              htmlFor="settings-language"
+            <span
+              id="settings-language-label"
               className="mb-xs block text-body-sm font-medium text-ink"
             >
               {t("settings.language.label")}
-            </label>
+            </span>
             <Select value={language} onValueChange={onLanguageChange}>
-              <SelectTrigger id="settings-language" data-testid={testIds.settings.language}>
+              <SelectTrigger
+                id="settings-language"
+                aria-labelledby="settings-language-label"
+                data-testid={testIds.settings.language}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
