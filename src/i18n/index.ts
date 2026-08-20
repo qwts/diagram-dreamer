@@ -2,8 +2,17 @@ import i18n from "i18next";
 import ICU from "i18next-icu";
 import { initReactI18next } from "react-i18next";
 import en from "./en.json";
+import { pseudoBundle } from "./pseudo";
 
 export const RTL_LANGUAGES = ["ar", "he", "fa", "ur"];
+
+/**
+ * Pseudo-localization is a build target, not a runtime feature: `VITE_PSEUDO=1
+ * npm run build` produces a bundle whose only language is pseudo. The flag is a
+ * literal in the normal build, so the transform tree-shakes out entirely and
+ * ships nothing to users.
+ */
+const PSEUDO = import.meta.env["VITE_PSEUDO"] === "1";
 
 /**
  * Accepts any BCP-47 shape the host might hand us — "ar", "AR-EG", "ar_EG" —
@@ -19,9 +28,11 @@ if (!i18n.isInitialized) {
     .use(ICU)
     .use(initReactI18next)
     .init({
-      resources: { en: { translation: en } },
-      lng: "en",
-      fallbackLng: "en",
+      resources: PSEUDO
+        ? { pseudo: { translation: pseudoBundle(en) } }
+        : { en: { translation: en } },
+      lng: PSEUDO ? "pseudo" : "en",
+      fallbackLng: PSEUDO ? "pseudo" : "en",
       interpolation: { escapeValue: false },
       react: { useSuspense: false },
       // Belt and braces: i18next already loads synchronously when `resources`
