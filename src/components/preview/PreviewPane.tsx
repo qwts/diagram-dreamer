@@ -21,15 +21,18 @@ export function PreviewPane({ blocks, ...handlers }: PreviewPaneProps) {
       data-testid={testIds.preview.root}
       className="flex h-full min-h-0 flex-col bg-paper"
     >
-      <div className="flex items-center justify-between border-b border-border bg-surface-raised px-md py-sm">
-        <span className="text-label-caps uppercase text-slate">{t("preview.title")}</span>
+      <div
+        data-testid={testIds.preview.toolbar}
+        className="flex items-center justify-between border-b border-border bg-surface-raised px-md py-sm"
+      >
+        <span className="text-label-caps text-slate">{t("preview.title")}</span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto p-lg" tabIndex={0}>
         {blocks.length === 0 ? (
           <div
             data-testid={testIds.preview.empty}
-            className="mx-auto max-w-md rounded-md border border-dashed border-border bg-surface-raised p-xl text-center"
+            className="mx-auto max-w-card rounded-md border border-dashed border-border bg-surface-raised p-xl text-center"
           >
             <FileStack className="mx-auto size-6 text-slate" aria-hidden="true" />
             <h2 className="mt-sm text-h2 text-ink">{t("preview.empty.title")}</h2>

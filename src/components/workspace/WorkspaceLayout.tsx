@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { TopToolbar } from "./TopToolbar";
 import { StatusBar } from "./StatusBar";
 import { SettingsDialog } from "./SettingsDialog";
@@ -35,11 +31,10 @@ export function WorkspaceLayout({
   onRejectDiff,
   onConnectAgent,
 }: WorkspaceLayoutProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(true);
   const [mermaidVersion, setMermaidVersion] = useState(doc.mermaidVersion);
-  const [language, setLanguage] = useState("en");
   const rootRef = useRef<HTMLDivElement>(null);
 
   /** F6 / Shift+F6 cycles the major regions: editor → preview → agent → status. */
@@ -57,9 +52,7 @@ export function WorkspaceLayout({
     const active = window.document.activeElement as HTMLElement | null;
     const currentIndex = nodes.findIndex((node) => node === active || node.contains(active));
     const next =
-      currentIndex < 0
-        ? 0
-        : (currentIndex + (backwards ? -1 : 1) + nodes.length) % nodes.length;
+      currentIndex < 0 ? 0 : (currentIndex + (backwards ? -1 : 1) + nodes.length) % nodes.length;
     const target = nodes[next]!;
     if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
     target.focus();
@@ -136,8 +129,8 @@ export function WorkspaceLayout({
         onOpenChange={setSettingsOpen}
         mermaidVersion={mermaidVersion}
         onMermaidVersionChange={setMermaidVersion}
-        language={language}
-        onLanguageChange={setLanguage}
+        language={i18n.language}
+        onLanguageChange={(next) => void i18n.changeLanguage(next)}
       />
     </div>
   );

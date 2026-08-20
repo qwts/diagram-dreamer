@@ -1,39 +1,38 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { StateSwitcher } from "@/components/dev/StateSwitcher";
 import {
   agentFixtures,
   documentFixtures,
+  parseFixtureState,
   type AgentFixtureKey,
   type DocumentFixtureKey,
 } from "@/fixtures";
 import type { AgentSession, PermissionResolution } from "@/types/shell";
 
-const searchSchema = z.object({
-  doc: z.enum(["empty", "multi", "failed"]).optional(),
-  agent: z.enum(["disconnected", "idle", "streaming", "permission", "diff"]).optional(),
-});
+const DOC_KEYS = ["empty", "multi", "failed"] as const;
+const AGENT_KEYS = ["disconnected", "idle", "streaming", "permission", "diff"] as const;
+
+interface WorkspaceSearch {
+  doc?: DocumentFixtureKey;
+  agent?: AgentFixtureKey;
+}
+
+/**
+ * Fixture selection. `?state=<doc>-<agent>` is the flat form the test gates
+ * iterate; `?doc=` / `?agent=` address the two axes independently. `state`
+ * wins when both are supplied.
+ */
+const validateSearch = (search: Record<string, unknown>): WorkspaceSearch => {
+  const fromState = parseFixtureState(search["state"]);
+  const doc = fromState?.doc ?? DOC_KEYS.find((key) => key === search["doc"]);
+  const agent = fromState?.agent ?? AGENT_KEYS.find((key) => key === search["agent"]);
+  return { ...(doc && { doc }), ...(agent && { agent }) };
+};
 
 export const Route = createFileRoute("/")({
-  validateSearch: searchSchema,
-  head: () => ({
-    meta: [
-      { title: "Vellum — Mermaid Document Workspace" },
-      {
-        name: "description",
-        content:
-          "Edit markdown with Mermaid blocks on the left, review rendered diagrams on the right, and work alongside a local agent.",
-      },
-      { property: "og:title", content: "Vellum — Mermaid Document Workspace" },
-      {
-        property: "og:description",
-        content:
-          "A drafting-table workspace for markdown documents with Mermaid diagrams and agentic editing.",
-      },
-    ],
-  }),
+  validateSearch,
   component: WorkspacePage,
 });
 
@@ -64,9 +63,7 @@ function WorkspacePage() {
       <WorkspaceLayout
         document={documentFixtures[documentKey]}
         session={activeSession}
-        onAskAgent={(blockId) =>
-          setSession({ ...activeSession, contextBlockId: blockId })
-        }
+        onAskAgent={(blockId) => setSession({ ...activeSession, contextBlockId: blockId })}
         onClearContext={() => {
           const { contextBlockId: _omit, ...rest } = activeSession;
           setSession(rest);

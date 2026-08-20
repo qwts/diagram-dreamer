@@ -26,7 +26,7 @@ export function StateSwitcher({ documentKey, agentKey, onChange }: StateSwitcher
     >
       {open ? (
         <div className="w-56 rounded-md border border-border bg-surface-raised p-md shadow-md">
-          <p className="text-label-caps uppercase text-slate">{t("dev.title")}</p>
+          <p className="text-label-caps text-slate">{t("dev.title")}</p>
           <div className="mt-sm flex flex-col gap-xs">
             {DOC_KEYS.map((key) => (
               <button
@@ -34,7 +34,7 @@ export function StateSwitcher({ documentKey, agentKey, onChange }: StateSwitcher
                 type="button"
                 data-testid={`${testIds.dev.option}.doc.${key}`}
                 onClick={() => onChange({ doc: key, agent: agentKey })}
-                className={`rounded-sm px-sm py-xs text-start text-body-sm ${documentKey === key ? "bg-lagoon/10 text-lagoon" : "text-slate hover:text-ink"}`}
+                className={`rounded-sm px-sm py-xs text-start text-body-sm ${documentKey === key ? "bg-lagoon-surface text-lagoon" : "text-slate hover:text-ink"}`}
               >
                 {t(`fixtures.doc.${key}`)}
               </button>
@@ -47,7 +47,7 @@ export function StateSwitcher({ documentKey, agentKey, onChange }: StateSwitcher
                 type="button"
                 data-testid={`${testIds.dev.option}.agent.${key}`}
                 onClick={() => onChange({ doc: documentKey, agent: key })}
-                className={`rounded-sm px-sm py-xs text-start text-body-sm ${agentKey === key ? "bg-lagoon/10 text-lagoon" : "text-slate hover:text-ink"}`}
+                className={`rounded-sm px-sm py-xs text-start text-body-sm ${agentKey === key ? "bg-lagoon-surface text-lagoon" : "text-slate hover:text-ink"}`}
               >
                 {t(`fixtures.agent.${key}`)}
               </button>

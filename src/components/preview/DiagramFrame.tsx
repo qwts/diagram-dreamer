@@ -47,7 +47,10 @@ export function DiagramFrame({
   return (
     <article
       data-testid={testIds.preview.diagramFrame}
-      aria-label={t("preview.frame.label", { id: block.id })}
+      // Prefer the diagram's own accessible name over the block id, which
+      // identifies without describing (SPEC §9).
+      aria-label={block.accTitle ?? t("preview.frame.label", { id: block.id })}
+      {...(block.accDescr !== undefined && { "aria-description": block.accDescr })}
       className="group rounded-md border border-border bg-surface-raised"
     >
       <header
@@ -60,7 +63,7 @@ export function DiagramFrame({
           </span>
           <span
             data-testid={testIds.preview.diagramType}
-            className="rounded-sm border border-border bg-[var(--muted)] px-xs py-[2px] font-mono text-body-sm text-slate"
+            className="rounded-sm border border-border bg-muted px-xs py-2xs font-mono text-body-sm text-slate"
           >
             {block.diagramType}
           </span>
@@ -127,7 +130,7 @@ export function DiagramFrame({
           className={`m-md rounded-md p-md ${diagnosticTone}`}
         >
           <div className="flex items-start gap-sm">
-            <CircleAlert className="mt-[2px] size-4 shrink-0" aria-hidden="true" />
+            <CircleAlert className="mt-2xs size-4 shrink-0" aria-hidden="true" />
             <div className="min-w-0">
               <p className="text-body-md font-medium">
                 {t(isWarning ? "preview.warning.title" : "preview.error.title")}

@@ -20,7 +20,8 @@ function ToolIcon({ status }: { status: ToolCallStatus }) {
 
 function StepIcon({ status }: { status: PlanStepStatus }) {
   if (status === "done") return <Check className="size-3.5 text-success" aria-hidden="true" />;
-  if (status === "active") return <Loader2 className="size-3.5 animate-spin text-lagoon" aria-hidden="true" />;
+  if (status === "active")
+    return <Loader2 className="size-3.5 animate-spin text-lagoon" aria-hidden="true" />;
   return <CircleDashed className="size-3.5 text-slate" aria-hidden="true" />;
 }
 
@@ -36,7 +37,11 @@ export function SessionTranscript({ items }: { items: AgentItem[] }) {
       {items.map((item) => {
         if (item.kind === "text") {
           return (
-            <li key={item.id} data-testid={testIds.agent.textItem} className="text-body-md text-ink">
+            <li
+              key={item.id}
+              data-testid={testIds.agent.textItem}
+              className="text-body-md text-ink"
+            >
               {t(item.bodyKey)}
             </li>
           );
@@ -49,7 +54,7 @@ export function SessionTranscript({ items }: { items: AgentItem[] }) {
               data-testid={testIds.agent.planItem}
               className="rounded-md border border-border bg-surface-raised p-md"
             >
-              <p className="flex items-center gap-xs text-label-caps uppercase text-slate">
+              <p className="flex items-center gap-xs text-label-caps text-slate">
                 <ListChecks className="size-3.5" aria-hidden="true" />
                 {t("agent.plan.label")}
               </p>

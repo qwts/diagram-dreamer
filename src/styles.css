@@ -18,11 +18,30 @@
   --radius-xl: var(--radius-pill);
   --radius: var(--radius-panel);
 
+  --spacing-2xs: 2px;
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 40px;
+
+  /*
+   * Measure caps, named so they cannot collide with the spacing scale.
+   *
+   * Do NOT use max-w-xs / -sm / -md / -lg / -xl here: `--spacing-*` shadows
+   * `--container-*` for those shared keys, so `max-w-md` silently resolves to
+   * --spacing-md (16px) rather than 28rem. That collapsed every empty state and
+   * the settings dialog to a few pixels wide. DESIGN.md owns the spacing names,
+   * so the measures move out of the way instead.
+   */
+  --container-narrow: 20rem;
+  --container-card: 28rem;
+  --container-dialog: 32rem;
+  --container-page: 56rem;
+
+  /* Editor line box. Matches --text-code--line-height so gutter rows and
+     source rows stay on the same rhythm. */
+  --spacing-editor-line: 1.6em;
 
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -67,14 +86,18 @@
   --color-ink: var(--foreground);
   --color-slate: var(--secondary);
   --color-lagoon: var(--tertiary);
+  --color-lagoon-hover: var(--tertiary-hover);
+  --color-lagoon-surface: var(--tertiary-surface);
   --color-on-lagoon: var(--on-tertiary);
   --color-paper: var(--background);
   --color-surface-raised: var(--surface-raised);
+  --color-muted: var(--muted);
   --color-danger: var(--danger);
   --color-danger-surface: var(--danger-surface);
   --color-warning: var(--warning);
   --color-warning-surface: var(--warning-surface);
   --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
 }
 
 :root {
@@ -86,6 +109,7 @@
   --secondary: #5c6470;
   --tertiary: #0e7c7b;
   --tertiary-hover: #0b6362;
+  --tertiary-surface: #f0f7f6;
   --on-tertiary: #ffffff;
   --background: #fafaf8;
   --surface-raised: #ffffff;
@@ -96,6 +120,7 @@
   --warning: #8a5a00;
   --warning-surface: #fdf3e0;
   --success: #1e7b34;
+  --success-surface: #e9f2eb;
 }
 
 .dark {
@@ -103,6 +128,7 @@
   --secondary: #9ba3ad;
   --tertiary: #3fbdb8;
   --tertiary-hover: #58cdc8;
+  --tertiary-surface: #17302f;
   --on-tertiary: #0b1416;
   --background: #141619;
   --surface-raised: #1d2024;
@@ -113,6 +139,7 @@
   --warning: #e0a949;
   --warning-surface: #33280f;
   --success: #6cd48a;
+  --success-surface: #25322e;
 }
 
 @layer base {

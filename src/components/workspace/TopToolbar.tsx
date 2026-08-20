@@ -10,7 +10,7 @@ import { Toolbar } from "@/components/common/Toolbar";
 import { VellumButton } from "@/components/common/VellumButton";
 import { SaveStateBadge } from "./SaveStateBadge";
 import { AgentChip } from "@/components/agent/AgentChip";
-import { useTheme } from "@/components/common/ThemeProvider";
+import { useTheme } from "@/components/common/theme-context";
 import { testIds } from "@/testids";
 import type { AgentConnectionState, DocumentModel } from "@/types/shell";
 
@@ -77,7 +77,9 @@ export function TopToolbar({
         <VellumButton
           variant="ghost"
           size="icon"
-          aria-label={t(resolved === "dark" ? "workspace.toolbar.themeDark" : "workspace.toolbar.themeLight")}
+          aria-label={t(
+            resolved === "dark" ? "workspace.toolbar.themeDark" : "workspace.toolbar.themeLight",
+          )}
           data-testid={testIds.workspace.themeToggle}
           onClick={toggle}
         >

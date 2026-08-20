@@ -1,9 +1,4 @@
-import type {
-  AgentSession,
-  DocumentModel,
-  DocumentTemplate,
-  RecentFile,
-} from "@/types/shell";
+import type { AgentSession, DocumentModel, DocumentTemplate, RecentFile } from "@/types/shell";
 
 const source = [
   "# Deployment architecture",
@@ -144,8 +139,20 @@ export const agentStreaming: AgentSession = {
         { id: "s4", labelKey: "agent.step.verify", status: "pending" },
       ],
     },
-    { kind: "toolCall", id: "item-4", toolName: "fs/read", target: "docs/architecture.md", status: "success" },
-    { kind: "toolCall", id: "item-5", toolName: "fs/write", target: "docs/architecture.md#block-1", status: "running" },
+    {
+      kind: "toolCall",
+      id: "item-4",
+      toolName: "fs/read",
+      target: "docs/architecture.md",
+      status: "success",
+    },
+    {
+      kind: "toolCall",
+      id: "item-5",
+      toolName: "fs/write",
+      target: "docs/architecture.md#block-1",
+      status: "running",
+    },
   ],
   streamingText: "agent.message.streaming",
 };
@@ -157,7 +164,13 @@ export const agentPermissionPending: AgentSession = {
   state: "awaiting-permission",
   items: [
     ...agentStreaming.items.slice(0, 4),
-    { kind: "toolCall", id: "item-5", toolName: "fs/write", target: "docs/architecture.md#block-1", status: "pending" },
+    {
+      kind: "toolCall",
+      id: "item-5",
+      toolName: "fs/write",
+      target: "docs/architecture.md#block-1",
+      status: "pending",
+    },
   ],
   permission: {
     id: "perm-1",
@@ -191,18 +204,63 @@ export const agentDiffPending: AgentSession = {
 };
 
 export const recentFiles: RecentFile[] = [
-  { id: "r1", fileName: "architecture.md", filePath: "~/projects/vellum/docs/architecture.md", openedAtKey: "welcome.recent.openedAt.today" },
-  { id: "r2", fileName: "acp-sequences.md", filePath: "~/projects/vellum/docs/acp-sequences.md", openedAtKey: "welcome.recent.openedAt.yesterday" },
-  { id: "r3", fileName: "release-plan.md", filePath: "~/notes/release-plan.md", openedAtKey: "welcome.recent.openedAt.lastWeek" },
+  {
+    id: "r1",
+    fileName: "architecture.md",
+    filePath: "~/projects/vellum/docs/architecture.md",
+    openedAtKey: "welcome.recent.openedAt.today",
+  },
+  {
+    id: "r2",
+    fileName: "acp-sequences.md",
+    filePath: "~/projects/vellum/docs/acp-sequences.md",
+    openedAtKey: "welcome.recent.openedAt.yesterday",
+  },
+  {
+    id: "r3",
+    fileName: "release-plan.md",
+    filePath: "~/notes/release-plan.md",
+    openedAtKey: "welcome.recent.openedAt.lastWeek",
+  },
 ];
 
 export const templates: DocumentTemplate[] = [
-  { id: "t1", nameKey: "welcome.templates.flowchart.name", descriptionKey: "welcome.templates.flowchart.description", diagramType: "flowchart" },
-  { id: "t2", nameKey: "welcome.templates.sequence.name", descriptionKey: "welcome.templates.sequence.description", diagramType: "sequenceDiagram" },
-  { id: "t3", nameKey: "welcome.templates.state.name", descriptionKey: "welcome.templates.state.description", diagramType: "stateDiagram-v2" },
-  { id: "t4", nameKey: "welcome.templates.er.name", descriptionKey: "welcome.templates.er.description", diagramType: "erDiagram" },
-  { id: "t5", nameKey: "welcome.templates.class.name", descriptionKey: "welcome.templates.class.description", diagramType: "classDiagram" },
-  { id: "t6", nameKey: "welcome.templates.gantt.name", descriptionKey: "welcome.templates.gantt.description", diagramType: "gantt" },
+  {
+    id: "t1",
+    nameKey: "welcome.templates.flowchart.name",
+    descriptionKey: "welcome.templates.flowchart.description",
+    diagramType: "flowchart",
+  },
+  {
+    id: "t2",
+    nameKey: "welcome.templates.sequence.name",
+    descriptionKey: "welcome.templates.sequence.description",
+    diagramType: "sequenceDiagram",
+  },
+  {
+    id: "t3",
+    nameKey: "welcome.templates.state.name",
+    descriptionKey: "welcome.templates.state.description",
+    diagramType: "stateDiagram-v2",
+  },
+  {
+    id: "t4",
+    nameKey: "welcome.templates.er.name",
+    descriptionKey: "welcome.templates.er.description",
+    diagramType: "erDiagram",
+  },
+  {
+    id: "t5",
+    nameKey: "welcome.templates.class.name",
+    descriptionKey: "welcome.templates.class.description",
+    diagramType: "classDiagram",
+  },
+  {
+    id: "t6",
+    nameKey: "welcome.templates.gantt.name",
+    descriptionKey: "welcome.templates.gantt.description",
+    diagramType: "gantt",
+  },
 ];
 
 export const documentFixtures = {
@@ -221,3 +279,26 @@ export const agentFixtures = {
 
 export type DocumentFixtureKey = keyof typeof documentFixtures;
 export type AgentFixtureKey = keyof typeof agentFixtures;
+
+/**
+ * Flat enumeration of every addressable fixture combination, so the test gates
+ * can iterate one list rather than a cross product. Each name is the `?state=`
+ * value for that combination. Never remove an entry — see CLAUDE.md invariant 6.
+ */
+export const fixtureStates: { name: string; doc: DocumentFixtureKey; agent: AgentFixtureKey }[] = (
+  Object.keys(documentFixtures) as DocumentFixtureKey[]
+).flatMap((doc) =>
+  (Object.keys(agentFixtures) as AgentFixtureKey[]).map((agent) => ({
+    name: `${doc}-${agent}`,
+    doc,
+    agent,
+  })),
+);
+
+/** Resolve a `?state=` value to its two axes. Returns undefined for anything unknown. */
+export function parseFixtureState(
+  value: unknown,
+): { doc: DocumentFixtureKey; agent: AgentFixtureKey } | undefined {
+  const match = fixtureStates.find((state) => state.name === value);
+  return match ? { doc: match.doc, agent: match.agent } : undefined;
+}

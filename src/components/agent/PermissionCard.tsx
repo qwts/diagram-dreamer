@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent } from "react";
+import { useRef, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ShieldQuestion, ShieldCheck, ShieldX } from "lucide-react";
 import { VellumButton } from "@/components/common/VellumButton";
@@ -12,15 +12,18 @@ interface PermissionCardProps {
   onDismissFocus?: (() => void) | undefined;
 }
 
-/** Inline, non-blocking, fully keyboard operable. Never a modal. */
+/**
+ * Inline, non-blocking, fully keyboard operable. Never a modal.
+ *
+ * Deliberately does NOT take focus when it appears. SPEC §7.2 calls for a
+ * non-blocking approval surface, and a card that seizes focus mid-typing is
+ * blocking in effect. Arrival is announced through the panel's polite live
+ * region instead; the card is reachable by Tab and by F6 region cycling.
+ */
 export function PermissionCard({ request, onResolve, onDismissFocus }: PermissionCardProps) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const resolved = request.resolution;
-
-  useEffect(() => {
-    if (!resolved) ref.current?.focus();
-  }, [resolved, request.id]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape") {
@@ -54,10 +57,13 @@ export function PermissionCard({ request, onResolve, onDismissFocus }: Permissio
       className="rounded-md border border-lagoon/40 bg-surface-raised p-md shadow-sm"
     >
       <div className="flex items-start gap-sm">
-        <ShieldQuestion className="mt-[2px] size-4 shrink-0 text-lagoon" aria-hidden="true" />
+        <ShieldQuestion className="mt-2xs size-4 shrink-0 text-lagoon" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="text-body-md font-medium text-ink">{t("agent.permission.title")}</p>
-          <p data-testid={testIds.agent.permissionTool} className="mt-xs font-mono text-body-sm text-ink">
+          <p
+            data-testid={testIds.agent.permissionTool}
+            className="mt-xs font-mono text-body-sm text-ink"
+          >
             {t("agent.permission.tool", { tool: request.toolName })}
           </p>
           <p

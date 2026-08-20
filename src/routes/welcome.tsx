@@ -6,21 +6,6 @@ import { recentFiles, templates } from "@/fixtures";
 import { testIds } from "@/testids";
 
 export const Route = createFileRoute("/welcome")({
-  head: () => ({
-    meta: [
-      { title: "Open a Document — Vellum" },
-      {
-        name: "description",
-        content:
-          "Pick up a recent markdown document or start from a Mermaid diagram template in Vellum.",
-      },
-      { property: "og:title", content: "Open a Document — Vellum" },
-      {
-        property: "og:description",
-        content: "Recent documents and Mermaid diagram templates to start from.",
-      },
-    ],
-  }),
   component: WelcomePage,
 });
 
@@ -30,7 +15,7 @@ function WelcomePage() {
   return (
     <main
       data-testid={testIds.welcome.root}
-      className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-xl px-md py-xl"
+      className="mx-auto flex min-h-screen w-full max-w-page flex-col gap-xl px-md py-xl"
     >
       <header>
         <h1 className="text-h1 text-ink">{t("welcome.title")}</h1>
@@ -61,7 +46,7 @@ function WelcomePage() {
                 <Link
                   to="/"
                   data-testid={testIds.welcome.recentItem}
-                  className="flex items-center gap-sm px-md py-sm vellum-motion transition-colors hover:bg-[var(--muted)]"
+                  className="flex items-center gap-sm px-md py-sm vellum-motion transition-colors hover:bg-muted"
                 >
                   <FileText className="size-4 shrink-0 text-slate" aria-hidden="true" />
                   <span className="min-w-0 flex-1">

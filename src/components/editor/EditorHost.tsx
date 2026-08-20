@@ -33,7 +33,7 @@ export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps
       className="flex h-full min-h-0 flex-col bg-paper"
     >
       <div className="flex items-center justify-between gap-sm border-b border-border bg-surface-raised px-md py-sm">
-        <span className="text-label-caps uppercase text-slate">{t("editor.title")}</span>
+        <span className="text-label-caps text-slate">{t("editor.title")}</span>
         <Toolbar label={t("editor.toolbar.label")} data-testid={testIds.editor.toolbar}>
           <VellumButton
             variant="ghost"
@@ -76,7 +76,7 @@ export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps
               <li
                 key={line}
                 data-testid={testIds.editor.gutterLine}
-                className="flex h-[1.6em] items-center justify-end gap-xs ps-sm pe-xs"
+                className="flex h-editor-line items-center justify-end gap-xs ps-sm pe-xs"
               >
                 {diagnostic ? (
                   <span
@@ -123,10 +123,11 @@ export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps
               <p
                 key={`${index}-${line}`}
                 className={cn(
-                  "h-[1.6em] whitespace-pre",
+                  "h-editor-line whitespace-pre",
                   wrap && "whitespace-pre-wrap",
                   diagnostic?.severity === "error" && "underline decoration-danger decoration-wavy",
-                  diagnostic?.severity === "warning" && "underline decoration-warning decoration-dotted",
+                  diagnostic?.severity === "warning" &&
+                    "underline decoration-warning decoration-dotted",
                 )}
               >
                 {line || "\u00a0"}

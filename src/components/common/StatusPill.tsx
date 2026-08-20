@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 type Tone = "neutral" | "lagoon" | "danger" | "warning" | "success";
 
 const tones: Record<Tone, string> = {
-  neutral: "text-slate border-border bg-[var(--muted)]",
-  lagoon: "text-lagoon border-lagoon/40 bg-lagoon/10",
+  neutral: "text-slate border-border bg-muted",
+  lagoon: "text-lagoon border-lagoon/40 bg-lagoon-surface",
   danger: "text-danger border-danger/40 bg-danger-surface",
-  warning: "text-warning border-warning/40 bg-warning/10",
-  success: "text-success border-success/40 bg-success/10",
+  warning: "text-warning border-warning/40 bg-warning-surface",
+  success: "text-success border-success/40 bg-success-surface",
 };
 
 /** Status is never signalled by color alone — an icon and a label are always present. */
@@ -28,7 +28,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-xs rounded-sm border px-xs py-[2px] text-body-sm font-medium",
+        "inline-flex items-center gap-xs rounded-sm border px-xs py-2xs text-body-sm font-medium",
         tones[tone],
         className,
       )}
