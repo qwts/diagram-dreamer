@@ -117,6 +117,20 @@ export function DiagramFrame({
   const liveFailed = !modelFailed && surface.status === "failed";
   const failed = modelFailed || liveFailed;
 
+  /**
+   * Mermaid counts lines within the block it was handed; the reader counts
+   * lines in their document. `startLine` is the opening fence, so the block's
+   * own line 1 is the document line after it.
+   *
+   * Without this, an error two lines into a block that starts at document line
+   * 14 reads "Line 2" and sends the reader to the top of the file. The model's
+   * own diagnostics are already document-relative and are not adjusted.
+   */
+  const liveLine =
+    surface.status === "failed" && surface.line !== undefined
+      ? block.startLine + surface.line
+      : block.startLine;
+
   return (
     <article
       data-testid={testIds.preview.diagramFrame}
@@ -148,9 +162,7 @@ export function DiagramFrame({
             >
               <CircleAlert className="size-3.5" aria-hidden="true" />
               {t("preview.error.line", {
-                line: modelFailed
-                  ? (block.diagnostic?.line ?? block.startLine)
-                  : ((surface.status === "failed" ? surface.line : undefined) ?? block.startLine),
+                line: modelFailed ? (block.diagnostic?.line ?? block.startLine) : liveLine,
               })}
             </span>
           ) : null}
@@ -213,63 +225,82 @@ export function DiagramFrame({
           // in a translated sentence is honest; pretending the text itself is
           // localisable would not be.
           message={t("preview.error.mermaid", { message: surface.message })}
-          line={surface.line ?? block.startLine}
+          line={liveLine}
         />
-      ) : (
-        <div className="p-lg">
-          {/*
-           * The viewport clips; the mount slot moves inside it. SPEC §9 requires
-           * pan "via keyboard", so the viewport itself is the control: focusable,
-           * named, and driven by the arrow keys. That is the affordance a
-           * pointer-only pan would leave without an equivalent.
-           *
-           * Deliberately not `role="application"` — that would suppress the
-           * screen reader's own arrow-key navigation everywhere inside. This
-           * stays a plain focusable group and only claims the arrow keys while
-           * it holds focus, which is why the handler calls preventDefault on
-           * exactly the four keys it consumes and nothing else.
-           */}
+      ) : null}
+
+      {/*
+       * Collapsed when a diagnostic is showing, never unmounted. Unmounting it
+       * would take the sandbox with it, and destroying the sandbox resets the
+       * failure that caused the collapse — the card disappears, the viewport
+       * returns, the render fails again, forever. Keeping the node alive breaks
+       * that circuit, and it means a block that starts rendering again does so
+       * in the frame it already had rather than reloading Mermaid.
+       *
+       * `h-0 overflow-hidden` rather than `hidden`: `display: none` gives the
+       * iframe a zero-sized viewport, so the next successful render would
+       * measure itself as 0×0 and come back invisible. Clipped content is still
+       * laid out; hidden content is not.
+       */}
+      <div
+        className={failed ? "h-0 overflow-hidden" : "p-lg"}
+        {...(failed && { "aria-hidden": true })}
+      >
+        {/*
+         * The viewport clips; the mount slot moves inside it. SPEC §9 requires
+         * pan "via keyboard", so the viewport itself is the control: focusable,
+         * named, and driven by the arrow keys. That is the affordance a
+         * pointer-only pan would leave without an equivalent.
+         *
+         * Deliberately not `role="application"` — that would suppress the
+         * screen reader's own arrow-key navigation everywhere inside. This
+         * stays a plain focusable group and only claims the arrow keys while
+         * it holds focus, which is why the handler calls preventDefault on
+         * exactly the four keys it consumes and nothing else.
+         */}
+        <div
+          data-testid={testIds.preview.viewport}
+          ref={viewportRef}
+          role="group"
+          // Not focusable while collapsed: a focusable element inside an
+          // aria-hidden subtree is itself a WCAG failure, and there is
+          // nothing in there to look at.
+          tabIndex={failed ? -1 : 0}
+          aria-label={t("preview.frame.viewport")}
+          onKeyDown={onViewportKeyDown}
+          className="overflow-hidden rounded-md"
+        >
           <div
-            data-testid={testIds.preview.viewport}
-            ref={viewportRef}
-            role="group"
-            tabIndex={0}
-            aria-label={t("preview.frame.viewport")}
-            onKeyDown={onViewportKeyDown}
-            className="overflow-hidden rounded-md"
+            data-testid={testIds.preview.mountSlot}
+            ref={containerRef}
+            className={
+              surface.status === "ready"
+                ? "flex justify-center rounded-md bg-paper"
+                : "flex min-h-48 items-center justify-center rounded-md border border-dashed border-border bg-paper text-body-sm text-slate"
+            }
+            style={{
+              zoom: `${zoom}%`,
+              translate: `${pan.x}px ${pan.y}px`,
+            }}
           >
-            <div
-              data-testid={testIds.preview.mountSlot}
-              ref={containerRef}
-              className={
-                surface.status === "ready"
-                  ? "flex justify-center rounded-md bg-paper"
-                  : "flex min-h-48 items-center justify-center rounded-md border border-dashed border-border bg-paper text-body-sm text-slate"
-              }
-              style={{
-                zoom: `${zoom}%`,
-                translate: `${pan.x}px ${pan.y}px`,
-              }}
-            >
-              {/*
-               * The sandbox iframe is appended here by `useDiagramSurface`. The
-               * placeholder below is what is shown when no renderer is injected
-               * — the fixture-driven states the `?state=` switcher exercises —
-               * and while the first render is in flight.
-               */}
-              {surface.status === "ready" ? null : block.state === "loading" ||
-                surface.status === "rendering" ? (
-                <span className="inline-flex items-center gap-sm">
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                  {t("preview.frame.loading")}
-                </span>
-              ) : (
-                <span>{t("preview.frame.mount")}</span>
-              )}
-            </div>
+            {/*
+             * The sandbox iframe is appended here by `useDiagramSurface`. The
+             * placeholder below is what is shown when no renderer is injected
+             * — the fixture-driven states the `?state=` switcher exercises —
+             * and while the first render is in flight.
+             */}
+            {surface.status === "ready" ? null : block.state === "loading" ||
+              surface.status === "rendering" ? (
+              <span className="inline-flex items-center gap-sm">
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                {t("preview.frame.loading")}
+              </span>
+            ) : (
+              <span>{t("preview.frame.mount")}</span>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {!failed ? (
         <footer className="flex items-center justify-between gap-sm border-t border-border px-md py-sm">

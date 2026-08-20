@@ -158,20 +158,29 @@ class Surface implements DiagramSurface {
     if (this.#destroyed) return destroyed;
 
     const requestId = `${++this.#sequence}`;
+    // The executor runs synchronously inside `new Promise`, so anything in it
+    // that touches `result` hits the temporal dead zone — `ReferenceError:
+    // Cannot access 'result' before initialization`, thrown into the executor,
+    // which rejects the very promise being built. Capturing `resolve` and doing
+    // the bookkeeping afterwards keeps the executor to one job.
+    let settle!: (value: RenderResult) => void;
     const result = new Promise<RenderResult>((resolve) => {
-      const timer = setTimeout(() => {
-        if (this.#pending?.requestId === requestId) this.#pending = null;
-        resolve({ ok: false, message: "Diagram rendering timed out" });
-      }, RENDER_TIMEOUT_MS);
-      const superseded = this.#pending;
-      this.#pending = { requestId, resolve, timer };
-      // Hand the older caller this render's outcome. The sandbox will never
-      // answer their request — it dropped it the moment this one arrived.
-      if (superseded) {
-        clearTimeout(superseded.timer);
-        void result.then(superseded.resolve);
-      }
+      settle = resolve;
     });
+
+    const timer = setTimeout(() => {
+      if (this.#pending?.requestId === requestId) this.#pending = null;
+      settle({ ok: false, message: "Diagram rendering timed out" });
+    }, RENDER_TIMEOUT_MS);
+
+    const superseded = this.#pending;
+    this.#pending = { requestId, resolve: settle, timer };
+    // Hand the older caller this render's outcome. The sandbox will never
+    // answer their request — it dropped it the moment this one arrived.
+    if (superseded) {
+      clearTimeout(superseded.timer);
+      void result.then(superseded.resolve);
+    }
 
     const request: RenderRequest = {
       kind: "vellum:render",
