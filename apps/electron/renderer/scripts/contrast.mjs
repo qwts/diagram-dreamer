@@ -1,11 +1,15 @@
 /**
- * Vellum token values and a WCAG contrast helper. Pure module — no side effects.
- * The CI gate lives in scripts/check-contrast.mjs.
+ * WCAG contrast helper and the list of token pairs that must clear a threshold.
+ * Pure module — no side effects. The CI gate lives in scripts/check-contrast.mjs.
  *
- * These values mirror src/styles.css. SPEC §9 has packages/design-tokens
- * generating both from DESIGN.md; until that exists, check-contrast.mjs
- * verifies they stay in sync with the stylesheet.
+ * The palette itself is no longer here. `@vellum/design-tokens` reads it from
+ * DESIGN.md (SPEC §9), and this module re-exports it so existing importers keep
+ * working. Two hand-maintained copies of seventeen hex values used to sit in
+ * this file; the gate compared them against styles.css, which caught drift
+ * between those two files while leaving both free to drift from the document
+ * that is supposed to be authoritative.
  */
+export { LIGHT, DARK } from "@vellum/design-tokens";
 const hex = (h) => {
   const s = h.replace("#", "");
   return [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16));
@@ -23,46 +27,6 @@ export const contrast = (a, b) => {
   const l1 = luminance(a);
   const l2 = luminance(b);
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-};
-
-export const LIGHT = {
-  foreground: "#16181a",
-  secondary: "#5c6470",
-  tertiary: "#0e7c7b",
-  "tertiary-hover": "#0b6362",
-  "tertiary-surface": "#f0f7f6",
-  "on-tertiary": "#ffffff",
-  background: "#fafaf8",
-  "surface-raised": "#ffffff",
-  muted: "#f2f1ed",
-  border: "#e3e1dc",
-  "border-strong": "#8d887c",
-  danger: "#b3261e",
-  "danger-surface": "#fbeae9",
-  warning: "#8a5a00",
-  "warning-surface": "#fdf3e0",
-  success: "#1e7b34",
-  "success-surface": "#e9f2eb",
-};
-
-export const DARK = {
-  foreground: "#e8e6e1",
-  secondary: "#9ba3ad",
-  tertiary: "#3fbdb8",
-  "tertiary-hover": "#58cdc8",
-  "tertiary-surface": "#17302f",
-  "on-tertiary": "#0b1416",
-  background: "#141619",
-  "surface-raised": "#1d2024",
-  muted: "#23272c",
-  border: "#2a2e33",
-  "border-strong": "#6a717d",
-  danger: "#f2b8b5",
-  "danger-surface": "#38211f",
-  warning: "#e0a949",
-  "warning-surface": "#33280f",
-  success: "#6cd48a",
-  "success-surface": "#25322e",
 };
 
 /** [label, foreground token, background token, minimum ratio] */

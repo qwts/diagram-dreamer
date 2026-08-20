@@ -68,6 +68,9 @@ importers:
       '@vellum/core':
         specifier: workspace:*
         version: link:../../../packages/core
+      '@vellum/design-tokens':
+        specifier: workspace:*
+        version: link:../../../packages/design-tokens
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -141,6 +144,8 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
+
+  packages/design-tokens: {}
 
 packages:
 
