@@ -129,7 +129,10 @@ export function DiagramFrame({
   const liveLine =
     surface.status === "failed" && surface.line !== undefined
       ? block.startLine + surface.line
-      : block.startLine;
+      : undefined;
+
+  /** The line the caption chip and the card point at, if either can point anywhere. */
+  const failureLine = modelFailed ? (block.diagnostic?.line ?? block.startLine) : liveLine;
 
   return (
     <article
@@ -161,9 +164,9 @@ export function DiagramFrame({
               }`}
             >
               <CircleAlert className="size-3.5" aria-hidden="true" />
-              {t("preview.error.line", {
-                line: modelFailed ? (block.diagnostic?.line ?? block.startLine) : liveLine,
-              })}
+              {failureLine === undefined
+                ? t("preview.error.noLine")
+                : t("preview.error.line", { line: failureLine })}
             </span>
           ) : null}
         </div>
@@ -225,7 +228,7 @@ export function DiagramFrame({
           // in a translated sentence is honest; pretending the text itself is
           // localisable would not be.
           message={t("preview.error.mermaid", { message: surface.message })}
-          line={liveLine}
+          {...(liveLine !== undefined && { line: liveLine })}
         />
       ) : null}
 

@@ -19,6 +19,8 @@ interface WorkspaceLayoutProps {
   onAcceptDiff?: ((id: string) => void) | undefined;
   onRejectDiff?: ((id: string) => void) | undefined;
   onConnectAgent?: (() => void) | undefined;
+  onEdit?: ((value: string) => void) | undefined;
+  onCursorChange?: ((cursor: { line: number; column: number }) => void) | undefined;
 }
 
 export function WorkspaceLayout({
@@ -30,6 +32,8 @@ export function WorkspaceLayout({
   onAcceptDiff,
   onRejectDiff,
   onConnectAgent,
+  onEdit,
+  onCursorChange,
 }: WorkspaceLayoutProps) {
   const { t, i18n } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -92,7 +96,7 @@ export function WorkspaceLayout({
           className="min-h-0 flex-1"
         >
           <ResizablePanel defaultSize={agentOpen ? "38" : "45"} minSize="20">
-            <EditorHost document={doc} />
+            <EditorHost document={doc} onChange={onEdit} onCursorChange={onCursorChange} />
           </ResizablePanel>
           <ResizableHandle
             withHandle

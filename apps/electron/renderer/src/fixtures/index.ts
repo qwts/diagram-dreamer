@@ -196,6 +196,14 @@ export const agentDisconnected: AgentSession = {
   items: [],
 };
 
+/**
+ * The block the agent fixtures point at. Taken from the parsed document rather
+ * than written out, because block ids are content hashes now — a literal here
+ * would go stale the first time somebody edits the fixture's flowchart, and
+ * the context chip would name a block that is not in the document.
+ */
+const contextBlockId = multiBlockDocument.blocks[0]!.id;
+
 export const agentIdle: AgentSession = {
   state: "idle",
   agentName: "Claude Code",
@@ -205,7 +213,7 @@ export const agentIdle: AgentSession = {
 export const agentStreaming: AgentSession = {
   state: "streaming",
   agentName: "Claude Code",
-  contextBlockId: "block-1",
+  contextBlockId,
   items: [
     ...baseItems,
     { kind: "text", id: "item-2", bodyKey: "agent.message.planIntro" },
@@ -230,7 +238,7 @@ export const agentStreaming: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "running",
     },
   ],
@@ -248,7 +256,7 @@ export const agentPermissionPending: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "pending",
     },
   ],
@@ -299,7 +307,7 @@ export const agentPermissionResolved: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "success",
     },
   ],

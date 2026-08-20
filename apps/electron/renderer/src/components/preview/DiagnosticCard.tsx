@@ -8,7 +8,13 @@ interface DiagnosticCardProps {
   severity: DiagnosticSeverity;
   /** Already translated, or verbatim from Mermaid — this component renders it. */
   message: string;
-  line: number;
+  /**
+   * Document line, when one is known. A failure that has no line — a sandbox
+   * that never started — shows no line reference: pointing at the opening
+   * fence would be a guess presented as a fact, and the reader would go there
+   * and find nothing wrong.
+   */
+  line?: number | undefined;
 }
 
 /**
@@ -42,9 +48,11 @@ export function DiagnosticCard({ severity, message, line }: DiagnosticCardProps)
             {t(isWarning ? "preview.warning.title" : "preview.error.title")}
           </p>
           <p className="mt-xs font-mono text-body-sm">{message}</p>
-          <p data-testid={testIds.preview.errorLineRef} className="mt-xs text-body-sm">
-            {t("preview.error.line", { line })}
-          </p>
+          {line === undefined ? null : (
+            <p data-testid={testIds.preview.errorLineRef} className="mt-xs text-body-sm">
+              {t("preview.error.line", { line })}
+            </p>
+          )}
         </div>
       </div>
     </div>

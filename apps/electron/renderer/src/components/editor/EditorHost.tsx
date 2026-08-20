@@ -1,30 +1,65 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, CircleAlert, Type, WrapText } from "lucide-react";
+import { Type, WrapText } from "lucide-react";
 import { Toolbar } from "@/components/common/Toolbar";
 import { VellumButton } from "@/components/common/VellumButton";
 import { testIds } from "@/testids";
-import type { Diagnostic, DocumentModel } from "@/types/shell";
-import { cn } from "@/lib/utils";
+import type { DocumentModel } from "@/types/shell";
+import { useCodeMirror, type Cursor, type EditorDiagnostic } from "./useCodeMirror";
 
 interface EditorHostProps {
   document: DocumentModel;
+  onChange?: ((value: string) => void) | undefined;
+  onCursorChange?: ((cursor: Cursor) => void) | undefined;
   onFormat?: (() => void) | undefined;
   onToggleWrap?: ((wrap: boolean) => void) | undefined;
 }
 
 /**
- * Frame only. A CodeMirror instance mounts into the scroll container later —
- * this component owns the gutter, toolbar and scroll chrome, nothing else.
+ * The editor region: toolbar and chrome around a CodeMirror 6 instance.
+ *
+ * Text goes in as a prop and comes out through `onChange` — no document state
+ * lives here, and nothing is written anywhere. The shell stays a view over a
+ * document the host owns (invariant 1).
  */
-export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps) {
+export function EditorHost({
+  document,
+  onChange,
+  onCursorChange,
+  onFormat,
+  onToggleWrap,
+}: EditorHostProps) {
   const { t } = useTranslation();
   const [wrap, setWrap] = useState(true);
 
-  const byLine = new Map<number, Diagnostic>();
-  for (const diagnostic of document.diagnostics) byLine.set(diagnostic.line, diagnostic);
+  const value = document.sourcePreview.join("\n");
 
-  const lines = Array.from({ length: Math.max(document.lineCount, 24) }, (_, index) => index + 1);
+  // Translated here rather than inside CodeMirror: the editor renders into DOM
+  // React does not own, so anything it displays has to arrive already in the
+  // user's language (invariant 4).
+  const diagnostics = useMemo<EditorDiagnostic[]>(
+    () =>
+      document.diagnostics.map((diagnostic) => ({
+        line: diagnostic.line,
+        severity: diagnostic.severity,
+        message: t(diagnostic.messageKey, { ...diagnostic.messageValues }),
+      })),
+    [document.diagnostics, t],
+  );
+
+  const { containerRef } = useCodeMirror({
+    value,
+    syncKey: document.id,
+    diagnostics,
+    wrap,
+    initialCursor: document.cursor,
+    ariaLabel: t("editor.content.label", { fileName: document.fileName }),
+    placeholder: t("editor.placeholder"),
+    badgeLabel: (severity, line) =>
+      t(severity === "error" ? "editor.gutter.errorBadge" : "editor.gutter.warningBadge", { line }),
+    onChange: (next) => onChange?.(next),
+    onCursorChange: (cursor) => onCursorChange?.(cursor),
+  });
 
   return (
     <section
@@ -42,7 +77,7 @@ export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps
             aria-pressed={wrap}
             data-testid={testIds.editor.wrapToggle}
             onClick={() => {
-              setWrap((value) => !value);
+              setWrap((current) => !current);
               onToggleWrap?.(!wrap);
             }}
           >
@@ -53,6 +88,10 @@ export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps
             size="icon"
             aria-label={t("editor.toolbar.format")}
             data-testid={testIds.editor.formatAction}
+            // Nothing formats documents yet. An enabled control that silently
+            // does nothing is worse than a disabled one — it tells the user the
+            // feature exists and that they pressed it wrong.
+            disabled={!onFormat}
             onClick={onFormat}
           >
             <Type className="size-4" aria-hidden="true" />
@@ -62,84 +101,13 @@ export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps
 
       <div
         data-testid={testIds.editor.scrollContainer}
-        className="flex min-h-0 flex-1 overflow-auto font-mono text-code"
-        tabIndex={0}
+        className="flex min-h-0 flex-1 overflow-hidden font-mono text-code"
+        // -1, not 0: this is the F6 region target, and CodeMirror's content is
+        // the tab stop. Two stops for one region would mean tabbing past an
+        // element that does nothing on the way into the editor.
+        tabIndex={-1}
       >
-        <ol
-          data-testid={testIds.editor.gutter}
-          aria-label={t("editor.gutter.label")}
-          className="sticky start-0 select-none border-e border-border bg-surface-raised py-sm text-end text-slate"
-        >
-          {lines.map((line) => {
-            const diagnostic = byLine.get(line);
-            return (
-              <li
-                key={line}
-                data-testid={testIds.editor.gutterLine}
-                className="flex h-editor-line items-center justify-end gap-xs ps-sm pe-xs"
-              >
-                {diagnostic ? (
-                  <span
-                    // role="img" so the label is permitted: a bare <span> maps
-                    // to role generic, which prohibits aria-label (axe
-                    // aria-prohibited-attr).
-                    role="img"
-                    data-testid={testIds.editor.errorBadge}
-                    title={t(
-                      diagnostic.severity === "error"
-                        ? "editor.gutter.errorBadge"
-                        : "editor.gutter.warningBadge",
-                      { line },
-                    )}
-                    aria-label={t(
-                      diagnostic.severity === "error"
-                        ? "editor.gutter.errorBadge"
-                        : "editor.gutter.warningBadge",
-                      { line },
-                    )}
-                    className={cn(
-                      "flex items-center",
-                      diagnostic.severity === "error" ? "text-danger" : "text-warning",
-                    )}
-                  >
-                    {diagnostic.severity === "error" ? (
-                      <CircleAlert className="size-3.5" aria-hidden="true" />
-                    ) : (
-                      <AlertTriangle className="size-3.5" aria-hidden="true" />
-                    )}
-                  </span>
-                ) : (
-                  <span className="size-3.5" aria-hidden="true" />
-                )}
-                <span className="w-6 tabular-nums">{line}</span>
-              </li>
-            );
-          })}
-        </ol>
-
-        <div
-          data-testid={testIds.editor.mountSlot}
-          className="min-w-0 flex-1 py-sm ps-md pe-md text-ink"
-        >
-          {document.sourcePreview.map((line, index) => {
-            const diagnostic = byLine.get(index + 1);
-            return (
-              <p
-                key={`${index}-${line}`}
-                className={cn(
-                  "h-editor-line whitespace-pre",
-                  wrap && "whitespace-pre-wrap",
-                  diagnostic?.severity === "error" && "underline decoration-danger decoration-wavy",
-                  diagnostic?.severity === "warning" &&
-                    "underline decoration-warning decoration-dotted",
-                )}
-              >
-                {line || "\u00a0"}
-              </p>
-            );
-          })}
-          <p className="mt-md text-body-sm text-slate">{t("editor.placeholder")}</p>
-        </div>
+        <div data-testid={testIds.editor.mountSlot} ref={containerRef} className="min-h-0 flex-1" />
       </div>
     </section>
   );
