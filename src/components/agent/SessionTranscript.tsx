@@ -49,7 +49,7 @@ export function SessionTranscript({ items }: { items: AgentItem[] }) {
               data-testid={testIds.agent.planItem}
               className="rounded-md border border-border bg-surface-raised p-md"
             >
-              <p className="flex items-center gap-xs text-label-caps uppercase text-slate">
+              <p className="flex items-center gap-xs text-label-caps text-slate">
                 <ListChecks className="size-3.5" aria-hidden="true" />
                 {t("agent.plan.label")}
               </p>

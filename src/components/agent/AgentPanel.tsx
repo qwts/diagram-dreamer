@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Bot, Loader2, SendHorizonal, X } from "lucide-react";
 import { SessionTranscript } from "./SessionTranscript";
@@ -35,6 +35,15 @@ export function AgentPanel({
   const transcriptRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
 
+  // The permission card no longer steals focus when it arrives (SPEC §7.2,
+  // "non-blocking"), so announce it politely instead.
+  const pendingPermissionId = session.permission?.resolution ? undefined : session.permission?.id;
+  const permissionTool = session.permission?.toolName;
+  useEffect(() => {
+    if (!pendingPermissionId) return;
+    setAnnouncement(t("agent.permission.announce", { tool: permissionTool ?? "" }));
+  }, [pendingPermissionId, permissionTool, t]);
+
   const resolveDiff = (id: string, status: "accepted" | "rejected") => {
     if (status === "accepted") onAcceptDiff?.(id);
     else onRejectDiff?.(id);
@@ -49,7 +58,7 @@ export function AgentPanel({
       className="flex h-full min-h-0 w-full flex-col border-s border-border bg-paper"
     >
       <header className="flex items-center justify-between gap-sm border-b border-border bg-surface-raised px-md py-sm">
-        <span className="flex items-center gap-sm text-label-caps uppercase text-slate">
+        <span className="flex items-center gap-sm text-label-caps text-slate">
           <Bot className="size-4" aria-hidden="true" />
           {t("agent.panel.title")}
         </span>
@@ -135,7 +144,7 @@ export function AgentPanel({
             {session.contextBlockId ? (
               <div
                 data-testid={testIds.agent.contextPill}
-                className="mb-sm inline-flex items-center gap-xs rounded-lg border border-lagoon/40 bg-lagoon/10 px-sm py-xs text-body-sm text-lagoon"
+                className="mb-sm inline-flex items-center gap-xs rounded-lg border border-lagoon/40 bg-lagoon-surface px-sm py-xs text-body-sm text-lagoon"
               >
                 <span className="font-mono">
                   {t("agent.prompt.context", { block: session.contextBlockId })}
@@ -145,7 +154,7 @@ export function AgentPanel({
                   aria-label={t("agent.prompt.contextRemove")}
                   data-testid={testIds.agent.contextPillRemove}
                   onClick={onClearContext}
-                  className="rounded-sm vellum-motion transition-colors hover:text-ink"
+                  className="inline-flex size-8 items-center justify-center rounded-sm vellum-motion transition-colors hover:text-ink"
                 >
                   <X className="size-3.5" aria-hidden="true" />
                 </button>

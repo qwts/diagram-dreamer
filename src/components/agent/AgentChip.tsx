@@ -5,10 +5,10 @@ import type { AgentConnectionState } from "@/types/shell";
 import { cn } from "@/lib/utils";
 
 const tones: Record<AgentConnectionState, string> = {
-  disconnected: "border-border bg-[var(--muted)] text-slate",
+  disconnected: "border-border bg-muted text-slate",
   idle: "border-border bg-surface-raised text-slate",
-  streaming: "border-lagoon/50 bg-lagoon/10 text-lagoon",
-  "awaiting-permission": "border-lagoon bg-lagoon/10 text-lagoon ring-2 ring-lagoon vellum-pulse",
+  streaming: "border-lagoon/50 bg-lagoon-surface text-lagoon",
+  "awaiting-permission": "border-lagoon bg-lagoon-surface text-lagoon ring-2 ring-lagoon vellum-pulse",
 };
 
 function Icon({ state }: { state: AgentConnectionState }) {

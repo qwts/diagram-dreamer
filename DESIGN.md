@@ -6,20 +6,35 @@ colors:
   primary: "#16181A"
   secondary: "#5C6470"
   tertiary: "#0E7C7B"
+  tertiary-hover: "#0B6362"
+  tertiary-surface: "#F0F7F6"
   on-tertiary: "#FFFFFF"
   neutral: "#FAFAF8"
   surface-raised: "#FFFFFF"
+  muted: "#F2F1ED"
   border: "#E3E1DC"
   danger: "#B3261E"
   danger-surface: "#FBEAE9"
   warning: "#8A5A00"
+  warning-surface: "#FDF3E0"
   success: "#1E7B34"
+  success-surface: "#E9F2EB"
   neutral-dark: "#141619"
   surface-raised-dark: "#1D2024"
+  muted-dark: "#23272C"
   primary-dark: "#E8E6E1"
   secondary-dark: "#9BA3AD"
   tertiary-dark: "#3FBDB8"
+  tertiary-hover-dark: "#58CDC8"
+  tertiary-surface-dark: "#17302F"
+  on-tertiary-dark: "#0B1416"
   border-dark: "#2A2E33"
+  danger-dark: "#F2B8B5"
+  danger-surface-dark: "#38211F"
+  warning-dark: "#E0A949"
+  warning-surface-dark: "#33280F"
+  success-dark: "#6CD48A"
+  success-surface-dark: "#25322E"
 typography:
   h1:
     fontFamily: Inter
@@ -57,6 +72,7 @@ rounded:
   md: 8px
   lg: 12px
 spacing:
+  2xs: 2px
   xs: 4px
   sm: 8px
   md: 16px
@@ -108,8 +124,12 @@ Dark mode is a first-class surface, not an inversion: the same semantic roles ma
 - **Tertiary (#0E7C7B):** Lagoon. The sole interactive accent — buttons, links, active states, focus rings, agent-activity indicators. If it isn't interactive or live, it isn't Lagoon.
 - **Neutral (#FAFAF8):** Warm paper. App background and editor surface; softer than pure white so exported white-background diagrams still read as distinct objects.
 - **Surface-raised (#FFFFFF):** Panels, cards, dialogs — one step above paper, separated by `border`, not shadow-first.
+- **Muted (#F2F1ED):** Recessed paper. The one step *below* surface-raised: inert pill backgrounds, secondary-button hover, disabled or disconnected chrome. Never carries meaning on its own — it is the absence of state, which is why it is not one of the status colors.
 - **Danger / Warning / Success:** Diagnostics only (parse errors, lint findings, agent permission prompts). Never decorative. Every status color is always paired with an icon or text label — color is never the sole signal.
-- **Dark set:** `neutral-dark` canvas, `surface-raised-dark` panels, `primary-dark` ink, `tertiary-dark` accent (brightened to hold ≥4.5:1 on dark surfaces).
+- **The `*-surface` tints:** each semantic color that can back a filled region has an explicit surface token — `tertiary-surface`, `danger-surface`, `warning-surface`, `success-surface`. Use them; never approximate one with an alpha of the base color. A 10% Lagoon tint reads as the same idea but only reaches 4.4:1 against Lagoon text, which fails AA — the tokens are tuned to clear 4.5:1 in both themes.
+- **Dark set:** every role above has a `*-dark` counterpart, not just the neutrals — the diagnostic colors and their surfaces are re-picked for dark rather than reused, because a tint that works on paper turns muddy on graphite. `tertiary-dark` is brightened to hold ≥4.5:1 on dark surfaces.
+
+Contrast is a token-level contract, not a per-screen concern: `npm run check:contrast` verifies every text-bearing pair in both themes against WCAG 2.1 AA and fails the build otherwise. It also asserts the values here still match `src/styles.css`.
 
 ## Typography
 
@@ -119,7 +139,7 @@ Type scale is compact because this is a desktop working tool: `body-md` at 15px 
 
 ## Layout & Spacing
 
-8px base grid via the `spacing` scale; `xs` (4px) only for intra-component gaps. The canonical layout is a two-pane split (source left, preview right; mirrored under RTL — all layout uses logical properties). Panels get `md` internal padding; the preview canvas gets generous `lg`+ margins so diagrams never touch chrome. Touch/click targets are minimum 32px with 40px preferred for primary actions.
+8px base grid via the `spacing` scale; `xs` (4px) only for intra-component gaps, and `2xs` (2px) reserved for optical corrections inside a control — pill padding, icon baseline nudges — never for layout. The canonical layout is a two-pane split (source left, preview right; mirrored under RTL — all layout uses logical properties). Panels get `md` internal padding; the preview canvas gets generous `lg`+ margins so diagrams never touch chrome. Touch/click targets are minimum 32px with 40px preferred for primary actions.
 
 ## Elevation & Depth
 
@@ -145,5 +165,5 @@ Border-first, shadow-second. Raised surfaces are distinguished by `border` and b
 - **Do** use logical CSS properties exclusively; the RTL build is a first-class target.
 - **Don't** let chrome tokens leak into rendered diagram internals — Mermaid theming is a separate, user-facing system (per-document frontmatter), not part of this identity.
 - **Don't** signal state with color alone; pair with icon, text, or shape.
-- **Don't** use `label-caps` on translatable strings.
+- **Don't** use `label-caps` on translatable strings. In practice this means pane titles ("Source", "Preview", "Agent") carry the `label-caps` size, weight and tracking but **not** `text-transform: uppercase` — casing is the part that does not survive translation.
 - **Don't** introduce new colors for features; new semantics must map to existing roles or be added here first, through a lint-gated PR.

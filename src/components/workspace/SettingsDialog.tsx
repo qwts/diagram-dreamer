@@ -56,7 +56,7 @@ export function SettingsDialog({
             <legend className="mb-xs text-body-sm font-medium text-ink">
               {t("settings.theme.label")}
             </legend>
-            <div className="inline-flex rounded-sm border border-border p-[2px]">
+            <div className="inline-flex rounded-sm border border-border p-2xs">
               {THEMES.map((option) => (
                 <button
                   key={option}
@@ -66,10 +66,8 @@ export function SettingsDialog({
                   data-testid={`${testIds.settings.themeOption}.${option}`}
                   onClick={() => setTheme(option)}
                   className={cn(
-                    "rounded-sm px-sm py-xs text-body-sm vellum-motion transition-colors",
-                    theme === option
-                      ? "bg-lagoon text-on-lagoon"
-                      : "text-slate hover:text-ink",
+                    "inline-flex h-8 items-center rounded-sm px-sm text-body-sm vellum-motion transition-colors",
+                    theme === option ? "bg-lagoon text-on-lagoon" : "text-slate hover:text-ink",
                   )}
                 >
                   {t(`settings.theme.${option}`)}

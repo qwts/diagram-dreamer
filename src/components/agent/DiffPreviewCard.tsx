@@ -33,7 +33,7 @@ export function DiffPreviewCard({
 
       <div className="mt-md grid gap-sm md:grid-cols-2">
         <div data-testid={testIds.agent.diffBefore}>
-          <p className="text-label-caps uppercase text-slate">{t("agent.diff.before")}</p>
+          <p className="text-label-caps text-slate">{t("agent.diff.before")}</p>
           <pre className="mt-xs overflow-auto rounded-sm border border-border bg-paper p-sm font-mono text-body-sm text-slate">
             {diff.before.map((line) => (
               <div key={line} className="whitespace-pre">
@@ -44,7 +44,7 @@ export function DiffPreviewCard({
           </pre>
         </div>
         <div data-testid={testIds.agent.diffAfter}>
-          <p className="text-label-caps uppercase text-slate">{t("agent.diff.after")}</p>
+          <p className="text-label-caps text-slate">{t("agent.diff.after")}</p>
           <pre className="mt-xs overflow-auto rounded-sm border border-border bg-paper p-sm font-mono text-body-sm text-ink">
             {diff.after.map((line) => (
               <div key={line} className="whitespace-pre">

@@ -46,7 +46,7 @@ function WelcomePage() {
                 <Link
                   to="/"
                   data-testid={testIds.welcome.recentItem}
-                  className="flex items-center gap-sm px-md py-sm vellum-motion transition-colors hover:bg-[var(--muted)]"
+                  className="flex items-center gap-sm px-md py-sm vellum-motion transition-colors hover:bg-muted"
                 >
                   <FileText className="size-4 shrink-0 text-slate" aria-hidden="true" />
                   <span className="min-w-0 flex-1">
