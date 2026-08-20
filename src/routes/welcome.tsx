@@ -15,7 +15,7 @@ function WelcomePage() {
   return (
     <main
       data-testid={testIds.welcome.root}
-      className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-xl px-md py-xl"
+      className="mx-auto flex min-h-screen w-full max-w-page flex-col gap-xl px-md py-xl"
     >
       <header>
         <h1 className="text-h1 text-ink">{t("welcome.title")}</h1>

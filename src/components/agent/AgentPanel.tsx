@@ -80,7 +80,7 @@ export function AgentPanel({
         >
           <Bot className="size-6 text-slate" aria-hidden="true" />
           <h2 className="text-h2 text-ink">{t("agent.disconnected.title")}</h2>
-          <p className="max-w-xs text-body-sm text-slate">{t("agent.disconnected.body")}</p>
+          <p className="max-w-narrow text-body-sm text-slate">{t("agent.disconnected.body")}</p>
           <VellumButton variant="primary" data-testid={testIds.agent.connect} onClick={onConnect}>
             {t("agent.disconnected.action")}
           </VellumButton>

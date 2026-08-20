@@ -25,6 +25,20 @@
   --spacing-lg: 24px;
   --spacing-xl: 40px;
 
+  /*
+   * Measure caps, named so they cannot collide with the spacing scale.
+   *
+   * Do NOT use max-w-xs / -sm / -md / -lg / -xl here: `--spacing-*` shadows
+   * `--container-*` for those shared keys, so `max-w-md` silently resolves to
+   * --spacing-md (16px) rather than 28rem. That collapsed every empty state and
+   * the settings dialog to a few pixels wide. DESIGN.md owns the spacing names,
+   * so the measures move out of the way instead.
+   */
+  --container-narrow: 20rem;
+  --container-card: 28rem;
+  --container-dialog: 32rem;
+  --container-page: 56rem;
+
   /* Editor line box. Matches --text-code--line-height so gutter rows and
      source rows stay on the same rhythm. */
   --spacing-editor-line: 1.6em;

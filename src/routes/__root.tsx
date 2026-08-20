@@ -11,7 +11,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-paper px-md">
-      <div className="max-w-md text-center">
+      <div className="max-w-card text-center">
         <h1 className="text-h1 text-ink">{t("error.title")}</h1>
         <p className="mt-sm text-body-md text-slate">{t("error.body")}</p>
         <div className="mt-lg flex justify-center">
