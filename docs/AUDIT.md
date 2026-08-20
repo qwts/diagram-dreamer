@@ -99,8 +99,10 @@ K2, K3, L1, L3, L6, M1, and the Q1 fixture-seam question.
   affordance change, so it needs **Q5** answered first.
 - **E12** — borders at ~1.2:1. Fine as dividers, questionable as the sole cue for
   `button-secondary`. Needs **Q7**.
-- **Lagoon on the two decorative card icons** — DESIGN.md:108 says "if it isn't
+- **Lagoon on the two decorative card icons** — DESIGN.md:126 says "if it isn't
   interactive or live, it isn't Lagoon", but both cards _are_ live. Left as-is.
+  _(Overturned in Phase 2: they are live only until the decision is made, and
+  both kept their Lagoon afterwards. See the questions section.)_
 
 **Still open, and unblocked by anything here:** B5's ICU migration is done but only
 `en` exists, so the pseudo-loc gate still needs a pseudo bundle (Phase 2). L2
@@ -165,8 +167,20 @@ invariant-2 guard that fails the build if anything imports `@tanstack/react-star
 again.
 
 **Resolved this phase:** B5 (pseudo bundle now exists), E8 via **Q5**, E12 via
-**Q7**, **Q9** (Storybook — answered "not here"), F4, G2, I4, J1–J4, L7, and the
-whole Phase 2 gate list.
+**Q7**, **Q9** (Storybook — answered "not here"), the Lagoon confirm (as a
+violation), F4, G2, I4, J1–J4, L7, and the whole Phase 2 gate list.
+
+**The Lagoon confirm was the last thing standing, and it turned out to be a real
+violation rather than the waiver I proposed.** Phase 0 argued both card icons sit
+on live surfaces. That held for the states the fixtures rendered and not for the
+states the types allow: `PermissionRequest.resolution` and `DiffPreview.status`
+both let a card outlive the decision it was asking for, and the resolved card is a
+settled record — buttons replaced by a `StatusPill`, nothing interactive, nothing
+live. Lagoon persisted into it anyway, on the icons and on the permission card's
+`border-lagoon/40`. Both now key off liveness and fall back to slate. The reason
+neither the audit nor 51 passing tests caught it is that **the resolved branch had
+no fixture at all**, so it was never rendered; `permissionResolved` and
+`diffSettled` close that, taking the suite to 67.
 
 **A bookkeeping sweep closed the audit out.** Reconciling every finding ID against
 the resolved lists turned up seven rows that were never marked either way. Five
@@ -343,10 +357,10 @@ Treat this file as evidence, not as a contract. Every row below is a place where
 
 Two of the original questions were **resolved by the documents** and are now findings, not questions:
 
-- _Lagoon on decorative icons_ → DESIGN.md:108 is unambiguous ("If it isn't interactive or live, it isn't Lagoon"), but both flagged icons sit on cards whose **state** is live — the permission card while awaiting a decision, the diff card while pending. I read "live element" as covering them and have **not** filed a violation. Say the word if you read it strictly and I'll recolor both to slate.
+- _Lagoon on decorative icons_ → **RESOLVED in Phase 2, and my Phase 0 reading was wrong.** I argued both icons sit on cards whose state is live. That is true of the states the fixtures showed me and false of the states the types permit: `PermissionRequest.resolution` and `DiffPreview.status` both let the card outlive the decision it was asking for, at which point it is a settled record — the Accept/Reject buttons give way to a `StatusPill` — and nothing about it is interactive or live. The Lagoon icon (and, on the permission card, a `border-lagoon/40`) persisted into that state, which DESIGN.md:126 forbids outright. Both now key off liveness. The branch had no fixture, which is why neither the audit nor 51 passing tests caught it; `permissionResolved` and `diffSettled` now cover it.
 - _Permission card focus_ → SPEC §7.2's "non-blocking approval surface" settles it; filed as **F3** with the announce-don't-focus fix. Q6 below is only about which of the two remedies you want.
 
-**Status at a glance.** Eight were answered in the course of Phase 1 and three more in Phase 2 — the reasoning for each is in the commit that acted on it, and any of them can be reversed. **All eleven are now answered**, with one confirm outstanding on Lagoon.
+**Status at a glance.** Eight were answered in the course of Phase 1 and three more in Phase 2 — the reasoning for each is in the commit that acted on it, and any of them can be reversed. **All eleven are now answered**, and the Lagoon confirm is resolved — as a violation, not a waiver.
 
 |        | Question                            | Status                                                                                                                                 |
 | ------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -362,7 +376,7 @@ Two of the original questions were **resolved by the documents** and are now fin
 | **Q9** | **Storybook in the Phase 2 gates?** | **done (Phase 2)** — no: deferred to Phase 3 with the rest of the §10 seams                                                            |
 | Q10    | 404 and error routes                | **done** — deleted the 404, kept a translated error boundary (`ae6f5a6`)                                                               |
 | Q11    | `preview.diagnostic.unknownType`    | **done** — kept as a reserved key (`1edbe24`)                                                                                          |
-| —      | Lagoon on two decorative icons      | **confirm** — left as-is, reading "live" as covering the card's state                                                                  |
+| —      | Lagoon on two decorative icons      | **done (Phase 2)** — was a real violation in the resolved states; both icons now key off liveness                                      |
 
 **Q0 — Document layout. (M1, K3) — RESOLVED, one optional follow-up.** Files are now arranged as described in §0. The only open piece: CLAUDE.md's "Authoritative documents" list doesn't mention the as-built record, so a future reader may not know it exists or that it's non-binding. Proposed one-line addition under that list, for your approval — I have not edited CLAUDE.md:
 

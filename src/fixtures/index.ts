@@ -238,6 +238,37 @@ export const agentDiffPending: AgentSession = {
   },
 };
 
+/**
+ * The settled counterparts. Both cards outlive the decision they were asking
+ * for — `PermissionRequest.resolution` and `DiffPreview.status` turn them into
+ * records of what happened — but until these existed nothing rendered that
+ * branch, so the resolved layout went unasserted and its Lagoon violation went
+ * unseen. A state a type permits needs a fixture.
+ */
+export const agentPermissionResolved: AgentSession = {
+  ...agentPermissionPending,
+  state: "idle",
+  items: [
+    ...agentPermissionPending.items.slice(0, 4),
+    {
+      kind: "toolCall",
+      id: "item-5",
+      toolName: "fs/write",
+      target: "docs/architecture.md#block-1",
+      status: "success",
+    },
+  ],
+  permission: {
+    ...agentPermissionPending.permission!,
+    resolution: "allowOnce",
+  },
+};
+
+export const agentDiffSettled: AgentSession = {
+  ...agentDiffPending,
+  diff: { ...agentDiffPending.diff!, status: "accepted" },
+};
+
 export const recentFiles: RecentFile[] = [
   {
     id: "r1",
@@ -310,7 +341,9 @@ export const agentFixtures = {
   idle: agentIdle,
   streaming: agentStreaming,
   permission: agentPermissionPending,
+  permissionResolved: agentPermissionResolved,
   diff: agentDiffPending,
+  diffSettled: agentDiffSettled,
 } as const;
 
 export type DocumentFixtureKey = keyof typeof documentFixtures;

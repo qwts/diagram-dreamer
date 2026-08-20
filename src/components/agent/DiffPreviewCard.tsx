@@ -3,6 +3,7 @@ import { Check, GitCompare, X } from "lucide-react";
 import { VellumButton } from "@/components/common/VellumButton";
 import { StatusPill } from "@/components/common/StatusPill";
 import { testIds } from "@/testids";
+import { cn } from "@/lib/utils";
 import type { DiffPreview } from "@/types/shell";
 
 export function DiffPreviewCard({
@@ -24,7 +25,13 @@ export function DiffPreviewCard({
       className="rounded-md border border-border bg-surface-raised p-md"
     >
       <div className="flex items-center gap-sm">
-        <GitCompare className="size-4 text-lagoon" aria-hidden="true" />
+        {/* Lagoon only while the diff is still awaiting a decision. Once it is
+            accepted or rejected the card is a settled record, and DESIGN.md
+            reserves Lagoon for what is interactive or live. */}
+        <GitCompare
+          className={cn("size-4", diff.status === "pending" ? "text-lagoon" : "text-slate")}
+          aria-hidden="true"
+        />
         <p className="text-body-md font-medium text-ink">{t("agent.diff.title")}</p>
       </div>
       <p className="mt-xs font-mono text-body-sm text-slate">
