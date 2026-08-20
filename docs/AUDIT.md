@@ -59,6 +59,57 @@ All three documents were read in full; nothing in sections E, L or M is provisio
 
 ---
 
+## Phase 1 status — completed 2026-08-19
+
+Worked on branch `worktree-m1-phase1`, six commits on top of the baseline. Every
+gate below was run, not assumed:
+
+| Gate | Result |
+| --- | --- |
+| `tsc --noEmit` | clean, with `noUnusedLocals` / `noUnusedParameters` now **on** |
+| `eslint .` | **0 errors, 0 warnings** |
+| `npm run check:contrast` | 36 token pairs, both themes, all ≥ AA; values match `styles.css` |
+| `vite build` | `index.html` + assets, **no server or worker bundle** |
+| `scripts/smoke-fixtures.mjs` | all 15 `?state=` combinations reachable |
+| In-browser | light + dark + RTL rendered, **zero console errors, zero raw keys** |
+
+**Resolved:** A1–A5, B1–B6, C1–C3, D1–D4, E2–E6, E9–E11, F1–F3, F5, H1–H3, I1–I3,
+K2, K3, L1, L3, L6, M1, and the Q1 fixture-seam question.
+
+**Two corrections to this audit, found by doing the work:**
+
+1. **B1 was wrong.** The raw-key defect was not a missing `initImmediate: false`.
+   i18next v26 renamed that option to `initAsync`, and init already runs
+   synchronously whenever `resources` is supplied inline
+   (`i18next.js:1882` — `if (this.options.resources || !this.options.initAsync)`).
+   The option is set anyway to state the requirement, but the deployed symptom was
+   SSR-specific and is moot now that SSR is gone. A client render was verified to
+   emit zero raw keys.
+2. **A defect the audit missed entirely.** Reading the source could not reveal it —
+   `max-w-md` resolved to **16px**, because the Vellum spacing scale shadows
+   Tailwind's container scale for the shared xs/sm/md/lg/xl keys. Every empty state
+   and the settings dialog were collapsed to a few pixels wide. Only surfaced by
+   rendering a fixture with an empty state. Fixed in `ee44ac9`.
+
+**Deliberately not changed — flagged, not reinterpreted** (CLAUDE.md invariant 8):
+
+- **E8** — more than one `button-primary` per view. DESIGN.md caps it at one; the
+  permission and diff fixtures show two. Demoting the prompt-send button is a real
+  affordance change, so it needs **Q5** answered first.
+- **E12** — borders at ~1.2:1. Fine as dividers, questionable as the sole cue for
+  `button-secondary`. Needs **Q7**.
+- **Lagoon on the two decorative card icons** — DESIGN.md:108 says "if it isn't
+  interactive or live, it isn't Lagoon", but both cards *are* live. Left as-is.
+
+**Still open, and unblocked by anything here:** B5's ICU migration is done but only
+`en` exists, so the pseudo-loc gate still needs a pseudo bundle (Phase 2). L2
+(`packages/design-tokens` generating the theme), L4 (no Save control), L5 (no pan
+control), L8 (Storybook, pending **Q9**) are Phase 2/3 by design. Questions Q2, Q3,
+Q4, Q6, Q10 and Q11 were answered in the course of the work — the reasoning is in
+each commit body; reverse any of them if you disagree.
+
+---
+
 ## 1. Findings
 
 Severity: **blocker** (contract cannot ship / gates cannot pass) · **contract-violation** (breaks a CLAUDE.md, DESIGN.md, or SPEC invariant) · **cleanup** (dead weight, inconsistency).
