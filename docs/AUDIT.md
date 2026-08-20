@@ -203,6 +203,44 @@ from §1 remains: every other finding is resolved, waived, or a clean record.
 
 ---
 
+## Phase 3 status — first step completed 2026-08-19
+
+The repo now has the SPEC §4 shape. `apps/electron/renderer/` holds the shell
+(src, tests, vite and playwright config); `packages/core/` holds the domain
+contracts, types only, no logic. Renderer files moved with `git mv` so history
+follows them, and a shared `tsconfig.base.json` carries the strict options both
+packages want.
+
+| Decision              | Taken                                                                                                                                                                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace tooling     | **pnpm workspaces, no turbo.** Turbo is a task runner layered on a workspace manager, not an alternative to one; two packages give it no task graph worth caching. Add it when it earns its keep.                                                                                   |
+| pnpm version          | Pinned by `packageManager`, resolved through corepack, so CI and a fresh clone agree.                                                                                                                                                                                               |
+| `nodeLinker: hoisted` | electron-builder walks `node_modules` itself and does not follow pnpm's nested symlinks. SPEC §4 commits us to Electron, so this is settled now rather than at the first package run. In `pnpm-workspace.yaml`, because npm also reads `.npmrc` and warns on keys it does not know. |
+| Contract boundary     | `src/types/shell.ts` re-exports from `@vellum/core` rather than each call site importing it, so the boundary is stated once and moving a type across it is a one-line change.                                                                                                       |
+| What stayed behind    | `RecentFile` and `DocumentTemplate` — welcome-screen view models made of i18next keys, with no domain meaning. `core` should never learn about them.                                                                                                                                |
+
+**Flagged, not fixed (invariant 8) — i18next keys inside domain contracts.**
+`Diagnostic.messageKey`, `AgentTextItem.bodyKey`, `AgentPlanItem.steps[].labelKey`
+and `DiffPreview.titleKey` all carry i18next keys. That is a presentation concern
+sitting in what is meant to be a headless contract: a real `core` would emit a
+stable code plus values and let the shell choose the wording, because nothing
+below the shell should know i18next exists. It is left alone deliberately —
+Phase 3's brief is a types-only extraction, and changing these fields is a
+contract redesign that touches every fixture and every component. It wants the
+real `core` in front of it to design against. The tension is also stated in the
+`packages/core` header so nobody meets it there without the reasoning.
+
+**Verified in the new layout:** typecheck across both packages, lint, format,
+contrast, build, and 67 Playwright tests. CI installs with `--frozen-lockfile`
+and gained a fourth build assertion — the build must not write to the repo root,
+which would mean the move had been half-undone.
+
+**Still open in Phase 3:** L2 (`packages/design-tokens` generating the theme from
+DESIGN.md), L4 (no Save control), L5 (no pan control), Storybook per **Q9**, and
+the remaining SPEC §4 packages — `acp-client`, `transport`, `test-agents`.
+
+---
+
 ## 1. Findings
 
 Severity: **blocker** (contract cannot ship / gates cannot pass) · **contract-violation** (breaks a CLAUDE.md, DESIGN.md, or SPEC invariant) · **cleanup** (dead weight, inconsistency).
