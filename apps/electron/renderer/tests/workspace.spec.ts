@@ -100,3 +100,43 @@ test("the permission card does not steal focus when it appears", async ({ page }
   // ...but it is announced in the polite live region.
   await expect(page.getByTestId("agent.transcript.announcement")).toContainText(/permission/i);
 });
+
+test("diagrams pan by keyboard, and fit restores both axes", async ({ page }) => {
+  // SPEC §9 requires pan "via keyboard". The viewport is the control, so it
+  // must be reachable and must consume the arrow keys only while focused.
+  await page.goto("/?state=multi-idle");
+  const viewport = page.getByTestId("preview.diagram-frame.viewport").first();
+  const slot = page.getByTestId("preview.diagram-frame.mount-slot").first();
+
+  // `translate: 0px 0px` computes to the shorthand "0px", not "none".
+  const NEUTRAL = "0px";
+  const translate = () => slot.evaluate((node) => window.getComputedStyle(node).translate);
+
+  await expect(viewport).toBeVisible();
+  expect(await translate()).toBe(NEUTRAL);
+
+  await viewport.focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowDown");
+  // Right and down move the view, so the content moves the other way.
+  expect(await translate()).toBe("-24px -24px");
+
+  // Shift takes the coarser step rather than repeating the fine one.
+  await page.keyboard.press("Shift+ArrowLeft");
+  expect(await translate()).toBe("72px -24px");
+
+  // Reset-pan is offered only once there is something to reset.
+  const panReset = page.getByTestId("preview.diagram-frame.pan-reset").first();
+  await expect(panReset).toBeEnabled();
+  await panReset.click();
+  expect(await translate()).toBe(NEUTRAL);
+  await expect(panReset).toBeDisabled();
+
+  // Fit restores pan as well as zoom — the property that makes it more than a
+  // duplicate of reset-zoom.
+  await viewport.focus();
+  await page.keyboard.press("ArrowUp");
+  expect(await translate()).toBe("0px 24px");
+  await page.getByTestId("preview.diagram-frame.zoom-fit").first().click();
+  expect(await translate()).toBe(NEUTRAL);
+});

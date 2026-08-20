@@ -57,6 +57,8 @@ export const testIds = {
     zoomOut: "preview.diagram-frame.zoom-out",
     zoomReset: "preview.diagram-frame.zoom-reset",
     zoomFit: "preview.diagram-frame.zoom-fit",
+    viewport: "preview.diagram-frame.viewport",
+    panReset: "preview.diagram-frame.pan-reset",
     errorCard: "preview.diagram-frame.error-card",
     errorLineRef: "preview.diagram-frame.error-line-ref",
   },
