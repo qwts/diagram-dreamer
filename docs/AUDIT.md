@@ -267,33 +267,50 @@ Two of the original questions were **resolved by the documents** and are now fin
 - *Lagoon on decorative icons* → DESIGN.md:108 is unambiguous ("If it isn't interactive or live, it isn't Lagoon"), but both flagged icons sit on cards whose **state** is live — the permission card while awaiting a decision, the diff card while pending. I read "live element" as covering them and have **not** filed a violation. Say the word if you read it strictly and I'll recolor both to slate.
 - *Permission card focus* → SPEC §7.2's "non-blocking approval surface" settles it; filed as **F3** with the announce-don't-focus fix. Q6 below is only about which of the two remedies you want.
 
-**Q0 is now resolved** (see below); the rest remain open.
+**Status at a glance.** Eight of these were answered in the course of Phase 1 — the reasoning for each is in the commit that acted on it, and any of them can be reversed. **Three remain genuinely open (Q5, Q7, Q9)**, plus one confirm on Lagoon.
+
+| | Question | Status |
+| --- | --- | --- |
+| Q0 | Document layout | **done** — files rearranged; optional CLAUDE.md line still proposed below |
+| Q1 | `?state=` vs `?doc=`+`?agent=` | **done** — both: `?state=` alias + `fixtureStates` enumeration (`ae6f5a6`) |
+| Q2 | `label-caps` on pane titles | **done** — dropped `uppercase`, kept the token (`abbe825`) |
+| Q3 | testid casing | **done** — kebab per SPEC §10.1 (`b615d0d`) |
+| Q4 | Who owns language and direction | **done** — option (b); `DocumentLanguage` drives `lang`/`dir` (`b615d0d`) |
+| **Q5** | **One primary button per view** | **OPEN** — blocks Phase 2 axe expectations |
+| Q6 | Permission card remedy | **done** — announce-only (`abbe825`) |
+| **Q7** | **Border contrast** | **OPEN** — blocks the `design.md lint` waiver decision |
+| Q8 | `zod` / `tw-animate-css` | **done** — dropped `zod`, kept `tw-animate-css` (`4081a8b`) |
+| **Q9** | **Storybook in the Phase 2 gates?** | **OPEN** — scope call, and it sizes Phase 2 |
+| Q10 | 404 and error routes | **done** — deleted the 404, kept a translated error boundary (`ae6f5a6`) |
+| Q11 | `preview.diagnostic.unknownType` | **done** — kept as a reserved key (`1edbe24`) |
+| — | Lagoon on two decorative icons | **confirm** — left as-is, reading "live" as covering the card's state |
+
 
 **Q0 — Document layout. (M1, K3) — RESOLVED, one optional follow-up.** Files are now arranged as described in §0. The only open piece: CLAUDE.md's "Authoritative documents" list doesn't mention the as-built record, so a future reader may not know it exists or that it's non-binding. Proposed one-line addition under that list, for your approval — I have not edited CLAUDE.md:
 
 > `docs/SHELL-AS-BUILT.md` — Lovable's description of the generated shell. Non-authoritative; a record of the pre-hardening state. Where it disagrees with this file, SPEC.md or DESIGN.md, they win.
 
-**Q1 — `?state=` vs `?doc=`+`?agent=`.** CLAUDE.md invariant 6 and the handoff both name `?state=`. Lovable built two orthogonal params giving 15 addressable combinations. That is arguably a better seam, but Phase 2's "for each `?state=` fixture" gate has no single enumerable list to iterate. Rename to a flat `?state=` enum, keep both axes and amend CLAUDE.md, or add a `?state=` alias that expands to a doc+agent pair?
+**Q1 — `?state=` vs `?doc=`+`?agent=`. — ANSWERED: implemented both.** CLAUDE.md invariant 6 and the handoff both name `?state=`. Lovable built two orthogonal params giving 15 addressable combinations. That is arguably a better seam, but Phase 2's "for each `?state=` fixture" gate has no single enumerable list to iterate. Rename to a flat `?state=` enum, keep both axes and amend CLAUDE.md, or add a `?state=` alias that expands to a doc+agent pair?
 
-**Q2 — `label-caps` on pane titles (E6).** DESIGN.md is internally in tension: it names "pane titles, kbd hints" as the `label-caps` use case, then forbids `label-caps` on translatable strings — and every pane title in the shell is translated. The binding Don't is explicit, so my proposed fix drops `uppercase` and keeps the token. Confirm, or would you rather pane titles stop being translated?
+**Q2 — `label-caps` on pane titles (E6). — ANSWERED: `uppercase` dropped.** DESIGN.md is internally in tension: it names "pane titles, kbd hints" as the `label-caps` use case, then forbids `label-caps` on translatable strings — and every pane title in the shell is translated. The binding Don't is explicit, so my proposed fix drops `uppercase` and keeps the token. Confirm, or would you rather pane titles stop being translated?
 
-**Q3 — testid casing (L3).** SPEC §10.1's example is kebab (`error-badge`); the registry is camel (`errorBadge`). 96 ids either way, and tests haven't been written yet, so this is cheap now and expensive later. Change the registry to kebab, or amend the SPEC to camel?
+**Q3 — testid casing (L3). — ANSWERED: kebab.** SPEC §10.1's example is kebab (`error-badge`); the registry is camel (`errorBadge`). 96 ids either way, and tests haven't been written yet, so this is cheap now and expensive later. Change the registry to kebab, or amend the SPEC to camel?
 
-**Q4 — Who owns language and direction (B4, L7).** Under invariant 1 the shell shouldn't own locale state — it should receive it. But `lang`/`dir` on `<html>` must be driven by someone, and in Electron that someone is the renderer. SPEC §5 puts direction hints in document frontmatter, which suggests `DocumentModel.direction`. Should the shell (a) take `language` as a prop and set `lang`/`dir` as a pure render effect, (b) own `i18n.changeLanguage` as presentation state, or (c) drop the selector until `packages/core` exists?
+**Q4 — Who owns language and direction (B4, L7). — ANSWERED: option (b).** Under invariant 1 the shell shouldn't own locale state — it should receive it. But `lang`/`dir` on `<html>` must be driven by someone, and in Electron that someone is the renderer. SPEC §5 puts direction hints in document frontmatter, which suggests `DocumentModel.direction`. Should the shell (a) take `language` as a prop and set `lang`/`dir` as a pure render effect, (b) own `i18n.changeLanguage` as presentation state, or (c) drop the selector until `packages/core` exists?
 
-**Q5 — One primary button per view (E8).** DESIGN.md caps it at one; the workspace shows two in the permission and diff fixtures, three with settings open. Does the icon-only prompt-send button count as a `button-primary`, or is the rule about full-size labelled buttons? If it counts, the send button should become secondary — which is a real affordance change.
+**Q5 — One primary button per view (E8). — OPEN.** DESIGN.md caps it at one; the workspace shows two in the permission and diff fixtures, three with settings open. Does the icon-only prompt-send button count as a `button-primary`, or is the rule about full-size labelled buttons? If it counts, the send button should become secondary — which is a real affordance change.
 
-**Q6 — Permission card remedy (F3).** Announce-only via the live region, or move focus but record and restore the prior element on resolve? Announce-only is truer to "non-blocking"; focus-and-restore is more discoverable for screen-reader users.
+**Q6 — Permission card remedy (F3). — ANSWERED: announce-only.** Announce-only via the live region, or move focus but record and restore the prior element on resolve? Announce-only is truer to "non-blocking"; focus-and-restore is more discoverable for screen-reader users.
 
-**Q7 — Border contrast (E12).** Borders sit at ~1.2–1.25:1. Fine as decorative dividers, questionable as the sole affordance cue for `button-secondary`. Darken `border`, give the secondary button its own higher-contrast outline token, or accept it and document the waiver so the `design.md lint` gate doesn't keep flagging it?
+**Q7 — Border contrast (E12). — OPEN.** Borders sit at ~1.2–1.25:1. Fine as decorative dividers, questionable as the sole affordance cue for `button-secondary`. Darken `border`, give the secondary button its own higher-contrast outline token, or accept it and document the waiver so the `design.md lint` gate doesn't keep flagging it?
 
-**Q8 — `zod` and `tw-animate-css` (H5).** Neither is on the permitted list. `zod`'s single use is replaceable by a six-line validator. `tw-animate-css` supplies the animation classes for the four surviving shadcn components — dropping it changes how dialogs and menus animate, which is a visual decision. Keep both, drop both, or drop `zod` only?
+**Q8 — `zod` and `tw-animate-css` (H5). — ANSWERED: dropped `zod` only.** Neither is on the permitted list. `zod`'s single use is replaceable by a six-line validator. `tw-animate-css` supplies the animation classes for the four surviving shadcn components — dropping it changes how dialogs and menus animate, which is a visual decision. Keep both, drop both, or drop `zod` only?
 
-**Q9 — Does Storybook join the Phase 2 gates (L8)?** SPEC §10.4 requires it per shell component with the a11y addon; CLAUDE.md's Phase 2 list omits it. Add it to Phase 2, defer to Phase 3 with the rest of the M0 seams, or drop it in favour of the Playwright + axe coverage?
+**Q9 — Does Storybook join the Phase 2 gates (L8)? — OPEN.** SPEC §10.4 requires it per shell component with the a11y addon; CLAUDE.md's Phase 2 list omits it. Add it to Phase 2, defer to Phase 3 with the rest of the M0 seams, or drop it in favour of the Playwright + axe coverage?
 
-**Q10 — Are 404 and error routes reachable at all in Electron (B2, E7)?** Under memory history with two routes and no address bar, a 404 is unreachable by user action; a render crash still needs a surface. Delete `NotFoundComponent` and keep a token-styled `ErrorComponent`, or keep both?
+**Q10 — Are 404 and error routes reachable at all in Electron (B2, E7)? — ANSWERED: 404 deleted.** Under memory history with two routes and no address bar, a 404 is unreachable by user action; a render crash still needs a surface. Delete `NotFoundComponent` and keep a token-styled `ErrorComponent`, or keep both?
 
-**Q11 — `preview.diagnostic.unknownType` (B6).** Unused today, but reads like a diagnostic `packages/core` will emit. Keep as a reserved key or delete and re-add?
+**Q11 — `preview.diagnostic.unknownType` (B6). — ANSWERED: kept as reserved.** Unused today, but reads like a diagnostic `packages/core` will emit. Keep as a reserved key or delete and re-add?
 
 ---
 
