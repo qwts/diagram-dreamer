@@ -221,3 +221,26 @@ export const agentFixtures = {
 
 export type DocumentFixtureKey = keyof typeof documentFixtures;
 export type AgentFixtureKey = keyof typeof agentFixtures;
+
+/**
+ * Flat enumeration of every addressable fixture combination, so the test gates
+ * can iterate one list rather than a cross product. Each name is the `?state=`
+ * value for that combination. Never remove an entry — see CLAUDE.md invariant 6.
+ */
+export const fixtureStates: { name: string; doc: DocumentFixtureKey; agent: AgentFixtureKey }[] = (
+  Object.keys(documentFixtures) as DocumentFixtureKey[]
+).flatMap((doc) =>
+  (Object.keys(agentFixtures) as AgentFixtureKey[]).map((agent) => ({
+    name: `${doc}-${agent}`,
+    doc,
+    agent,
+  })),
+);
+
+/** Resolve a `?state=` value to its two axes. Returns undefined for anything unknown. */
+export function parseFixtureState(
+  value: unknown,
+): { doc: DocumentFixtureKey; agent: AgentFixtureKey } | undefined {
+  const match = fixtureStates.find((state) => state.name === value);
+  return match ? { doc: match.doc, agent: match.agent } : undefined;
+}

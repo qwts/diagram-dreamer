@@ -6,21 +6,6 @@ import { recentFiles, templates } from "@/fixtures";
 import { testIds } from "@/testids";
 
 export const Route = createFileRoute("/welcome")({
-  head: () => ({
-    meta: [
-      { title: "Open a Document — Vellum" },
-      {
-        name: "description",
-        content:
-          "Pick up a recent markdown document or start from a Mermaid diagram template in Vellum.",
-      },
-      { property: "og:title", content: "Open a Document — Vellum" },
-      {
-        property: "og:description",
-        content: "Recent documents and Mermaid diagram templates to start from.",
-      },
-    ],
-  }),
   component: WelcomePage,
 });
 
