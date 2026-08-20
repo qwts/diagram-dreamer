@@ -1,0 +1,15 @@
+packages:
+  - "apps/*/*"
+  - "packages/*"
+
+# A flat node_modules, not pnpm's default symlinked store.
+#
+# electron-builder resolves the production dependency tree by walking
+# node_modules itself and does not follow pnpm's nested symlinks, so an app
+# packaged from the default layout ships with modules missing. SPEC §4 commits
+# this repo to Electron, so the constraint is known now rather than discovered
+# at the first `electron-builder` run.
+#
+# This lives here rather than in .npmrc because npm also reads .npmrc and warns
+# about keys it does not recognise.
+nodeLinker: hoisted

@@ -1,4 +1,26 @@
-/** Presentation-only contracts. No logic lives in the shell; all data arrives via props. */
+/**
+ * Domain contracts. **Types only — no logic, ever, until the real `core` lands.**
+ *
+ * These are the shapes the renderer is handed, extracted per CLAUDE.md Phase 3
+ * so the shell and whatever eventually produces this data agree on one
+ * definition. Nothing here imports anything; nothing here executes.
+ *
+ * ---
+ *
+ * **Known tension, deliberately not resolved here.** Several fields carry
+ * *i18next keys* rather than data: `Diagnostic.messageKey`,
+ * `AgentTextItem.bodyKey`, `AgentPlanItem.steps[].labelKey`,
+ * `DiffPreview.titleKey`. That is a presentation concern sitting in what is
+ * meant to be a domain contract — a real `core` would emit a stable code plus
+ * values and let the shell choose the wording, because a headless core has no
+ * business knowing i18next exists.
+ *
+ * It is left as-is on purpose. Phase 3 is a types-only extraction; changing
+ * these fields is a contract redesign that would touch every fixture and every
+ * component, and it wants the real `core` in front of it to design against.
+ * Flagged rather than silently reinterpreted (CLAUDE.md invariant 8), and
+ * recorded in `docs/AUDIT.md`.
+ */
 
 export type SaveState = "saved" | "unsaved" | "saving" | "error";
 
@@ -46,20 +68,22 @@ export interface DocumentModel {
   cursor: { line: number; column: number };
   /**
    * Frontmatter — per-document config (SPEC §5). All three are declared by the
-   * document, parsed by `packages/core`, and only ever displayed here.
+   * document, parsed here once this package has a parser, and only ever
+   * displayed by the shell.
    *
    * `theme` is the document's *diagram* theme (mermaid's `default` / `dark` /
-   * `forest` / `neutral` / `base`, or a site theme), which is **not**
-   * `ThemePreference`: that is the application chrome's light/dark/system
-   * setting and belongs to the user, not the file. Kept as a string for the
-   * same reason `mermaidVersion` is — the set of valid values is mermaid's to
-   * define, and the shell must not encode it.
+   * `forest` / `neutral` / `base`, or a site theme), which is **not** the
+   * shell's `ThemePreference`: that is the application chrome's
+   * light/dark/system setting and belongs to the user, not the file. Kept as a
+   * string for the same reason `mermaidVersion` is — the set of valid values is
+   * mermaid's to define, and neither this package nor the shell should encode
+   * it.
    *
    * `direction` is the document's own RTL hint. Per Q4 the shell does not act
-   * on it: `<html lang>`/`<html dir>` follow the UI language via
-   * `DocumentLanguage`, because in Electron the renderer owns that. This field
-   * exists so a document that declares its own direction has somewhere to say
-   * so once `packages/core` can honour it per-preview.
+   * on it: `<html lang>`/`<html dir>` follow the UI language, because in
+   * Electron the renderer owns that. This field exists so a document that
+   * declares its own direction has somewhere to say so once this package can
+   * honour it per-preview.
    */
   theme?: string | undefined;
   mermaidVersion: string;
@@ -120,18 +144,4 @@ export interface AgentSession {
   permission?: PermissionRequest | undefined;
   diff?: DiffPreview | undefined;
   contextBlockId?: string | undefined;
-}
-
-export interface RecentFile {
-  id: string;
-  fileName: string;
-  filePath: string;
-  openedAtKey: string;
-}
-
-export interface DocumentTemplate {
-  id: string;
-  nameKey: string;
-  descriptionKey: string;
-  diagramType: string;
 }
