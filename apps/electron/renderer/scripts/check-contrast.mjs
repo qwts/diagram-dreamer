@@ -2,8 +2,9 @@
  * CI gate: every Vellum token pair that carries text must meet WCAG 2.1 AA,
  * in both themes (SPEC §9, "Contrast enforced at the token level").
  *
- * Also verifies the values here still match src/styles.css, so the gate cannot
- * silently pass against a stale copy of the palette.
+ * Also verifies that src/styles.css still matches DESIGN.md, which
+ * `@vellum/design-tokens` reads. That is the half of SPEC §9 that matters: the
+ * stylesheet cannot drift from the document without failing the build.
  *
  * Run: npm run check:contrast
  */
@@ -37,7 +38,7 @@ for (const [themeName, selector, tokens] of [
     if (fromCss[name] !== value) {
       drift += 1;
       console.error(
-        `  DRIFT  ${themeName} --${name}: styles.css has ${fromCss[name] ?? "(missing)"}, this file has ${value}`,
+        `  DRIFT  ${themeName} --${name}: styles.css has ${fromCss[name] ?? "(missing)"}, DESIGN.md has ${value}`,
       );
     }
   }
@@ -65,7 +66,7 @@ for (const [themeName, tokens] of [
 
 console.log(
   failed === 0
-    ? "\nAll token pairs meet WCAG 2.1 AA, and match src/styles.css.\n"
+    ? "\nAll token pairs meet WCAG 2.1 AA; DESIGN.md and src/styles.css agree.\n"
     : `\n${failed} pair(s) below threshold.\n`,
 );
 process.exit(failed === 0 ? 0 : 1);

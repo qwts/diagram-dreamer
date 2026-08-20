@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Download, Moon, PanelRight, Settings, Sun } from "lucide-react";
+import { Download, Moon, PanelRight, Save, Settings, Sun } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ interface TopToolbarProps {
   onOpenSettings: () => void;
   onToggleAgentPanel: () => void;
   onExport?: ((format: "svg" | "png" | "markdown") => void) | undefined;
+  onSave?: (() => void) | undefined;
 }
 
 export function TopToolbar({
@@ -28,6 +29,7 @@ export function TopToolbar({
   onOpenSettings,
   onToggleAgentPanel,
   onExport,
+  onSave,
 }: TopToolbarProps) {
   const { t } = useTranslation();
   const { resolved, toggle } = useTheme();
@@ -45,6 +47,33 @@ export function TopToolbar({
       </div>
 
       <Toolbar label={t("workspace.toolbar.label")} data-testid={testIds.workspace.toolbar}>
+        {/*
+         * SPEC §8 lists "Open/save/watch local files". `SaveStateBadge` next to
+         * the filename reports the state; this is the way to act on it.
+         *
+         * The label changes with the state rather than the button vanishing —
+         * a control that disappears when there is nothing to do is a control
+         * users stop looking for. Disabled while saved or mid-save; the
+         * Toolbar's roving focus skips disabled buttons, so arrow navigation is
+         * unaffected either way.
+         */}
+        <VellumButton
+          variant="ghost"
+          size="icon"
+          aria-label={t(
+            document.saveState === "error"
+              ? "workspace.toolbar.saveRetry"
+              : document.saveState === "saved"
+                ? "workspace.toolbar.saveNothing"
+                : "workspace.toolbar.save",
+          )}
+          data-testid={testIds.workspace.save}
+          disabled={document.saveState === "saved" || document.saveState === "saving"}
+          onClick={onSave}
+        >
+          <Save className="size-4" aria-hidden="true" />
+        </VellumButton>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <VellumButton data-testid={testIds.workspace.exportMenu}>

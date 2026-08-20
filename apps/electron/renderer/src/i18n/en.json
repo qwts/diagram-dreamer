@@ -19,7 +19,10 @@
       "themeLight": "Switch to dark theme",
       "themeDark": "Switch to light theme",
       "settings": "Open settings",
-      "agentPanel": "Toggle agent panel"
+      "agentPanel": "Toggle agent panel",
+      "save": "Save document",
+      "saveNothing": "No unsaved changes",
+      "saveRetry": "Retry saving document"
     },
     "save": {
       "saved": "Saved",
@@ -34,7 +37,9 @@
       "diagnostics": "{count, plural, one {# diagnostic} other {# diagnostics}}",
       "noDiagnostics": "No diagnostics"
     },
-    "splitter": { "label": "Resize editor and preview panes" },
+    "splitter": {
+      "label": "Resize editor and preview panes"
+    },
     "regionHint": "Press F6 to cycle regions"
   },
   "agentChip": {
@@ -78,10 +83,18 @@
       "zoomOut": "Zoom out",
       "zoomReset": "Reset zoom",
       "zoomFit": "Fit to frame",
-      "zoomLevel": "Zoom {value} percent"
+      "zoomLevel": "Zoom {value} percent",
+      "viewport": "Diagram viewport. Use the arrow keys to pan.",
+      "panReset": "Reset pan",
+      "panPosition": "Panned {x} by {y} pixels"
     },
-    "error": { "title": "This diagram could not be rendered", "line": "Line {line}" },
-    "warning": { "title": "This diagram rendered with warnings" },
+    "error": {
+      "title": "This diagram could not be rendered",
+      "line": "Line {line}"
+    },
+    "warning": {
+      "title": "This diagram rendered with warnings"
+    },
     "diagnostic": {
       "parse": "Parse error: unexpected token near “{token}”.",
       "unknownType": "Unknown diagram type “{type}”.",
@@ -89,16 +102,27 @@
     }
   },
   "agent": {
-    "panel": { "title": "Agent", "label": "Agent session", "close": "Close agent panel" },
+    "panel": {
+      "title": "Agent",
+      "label": "Agent session",
+      "close": "Close agent panel"
+    },
     "disconnected": {
       "title": "No agent connected",
       "body": "Connect a local agent to generate, explain and refactor diagrams.",
       "action": "Connect agent"
     },
-    "transcript": { "label": "Session transcript", "streaming": "Agent is responding" },
+    "transcript": {
+      "label": "Session transcript",
+      "streaming": "Agent is responding"
+    },
     "plan": {
       "label": "Plan",
-      "status": { "pending": "Pending", "active": "In progress", "done": "Done" }
+      "status": {
+        "pending": "Pending",
+        "active": "In progress",
+        "done": "Done"
+      }
     },
     "toolCall": {
       "status": {
@@ -136,7 +160,10 @@
       "after": "After",
       "accept": "Accept edit",
       "reject": "Reject edit",
-      "status": { "accepted": "Edit accepted", "rejected": "Edit rejected" }
+      "status": {
+        "accepted": "Edit accepted",
+        "rejected": "Edit rejected"
+      }
     },
     "message": {
       "greeting": "I read the document and found three diagrams. Which one should I work on?",
@@ -157,7 +184,11 @@
     "recent": {
       "title": "Recent files",
       "empty": "No recent documents yet.",
-      "openedAt": { "today": "Today", "yesterday": "Yesterday", "lastWeek": "Last week" }
+      "openedAt": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "lastWeek": "Last week"
+      }
     },
     "templates": {
       "title": "Templates",
@@ -169,20 +200,36 @@
         "name": "Sequence diagram",
         "description": "Message exchange between services."
       },
-      "state": { "name": "State machine", "description": "States and transitions for a workflow." },
+      "state": {
+        "name": "State machine",
+        "description": "States and transitions for a workflow."
+      },
       "er": {
         "name": "Entity relationship",
         "description": "Tables and relationships for a data model."
       },
-      "class": { "name": "Class diagram", "description": "Types and their associations." },
-      "gantt": { "name": "Gantt chart", "description": "Milestones across a delivery timeline." }
+      "class": {
+        "name": "Class diagram",
+        "description": "Types and their associations."
+      },
+      "gantt": {
+        "name": "Gantt chart",
+        "description": "Milestones across a delivery timeline."
+      }
     }
   },
   "settings": {
     "title": "Settings",
     "description": "Preferences apply to this workspace.",
-    "theme": { "label": "Theme", "light": "Light", "dark": "Dark", "system": "System" },
-    "mermaidVersion": { "label": "Default Mermaid version" },
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "mermaidVersion": {
+      "label": "Default Mermaid version"
+    },
     "language": {
       "label": "Language",
       "en": "English",

@@ -203,6 +203,84 @@ from §1 remains: every other finding is resolved, waived, or a clean record.
 
 ---
 
+## Phase 3 status — first step completed 2026-08-19
+
+The repo now has the SPEC §4 shape. `apps/electron/renderer/` holds the shell
+(src, tests, vite and playwright config); `packages/core/` holds the domain
+contracts, types only, no logic. Renderer files moved with `git mv` so history
+follows them, and a shared `tsconfig.base.json` carries the strict options both
+packages want.
+
+| Decision              | Taken                                                                                                                                                                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace tooling     | **pnpm workspaces, no turbo.** Turbo is a task runner layered on a workspace manager, not an alternative to one; two packages give it no task graph worth caching. Add it when it earns its keep.                                                                                   |
+| pnpm version          | Pinned by `packageManager`, resolved through corepack, so CI and a fresh clone agree.                                                                                                                                                                                               |
+| `nodeLinker: hoisted` | electron-builder walks `node_modules` itself and does not follow pnpm's nested symlinks. SPEC §4 commits us to Electron, so this is settled now rather than at the first package run. In `pnpm-workspace.yaml`, because npm also reads `.npmrc` and warns on keys it does not know. |
+| Contract boundary     | `src/types/shell.ts` re-exports from `@vellum/core` rather than each call site importing it, so the boundary is stated once and moving a type across it is a one-line change.                                                                                                       |
+| What stayed behind    | `RecentFile` and `DocumentTemplate` — welcome-screen view models made of i18next keys, with no domain meaning. `core` should never learn about them.                                                                                                                                |
+
+**Flagged, not fixed (invariant 8) — i18next keys inside domain contracts.**
+`Diagnostic.messageKey`, `AgentTextItem.bodyKey`, `AgentPlanItem.steps[].labelKey`
+and `DiffPreview.titleKey` all carry i18next keys. That is a presentation concern
+sitting in what is meant to be a headless contract: a real `core` would emit a
+stable code plus values and let the shell choose the wording, because nothing
+below the shell should know i18next exists. It is left alone deliberately —
+Phase 3's brief is a types-only extraction, and changing these fields is a
+contract redesign that touches every fixture and every component. It wants the
+real `core` in front of it to design against. The tension is also stated in the
+`packages/core` header so nobody meets it there without the reasoning.
+
+**Verified in the new layout:** typecheck across both packages, lint, format,
+contrast, build, and 67 Playwright tests. CI installs with `--frozen-lockfile`
+and gained a fourth build assertion — the build must not write to the repo root,
+which would mean the move had been half-undone.
+
+**L2 — done, by a different mechanism than SPEC §9 prescribes.**
+`@vellum/design-tokens` now reads the palette from DESIGN.md's frontmatter, and
+the contrast gate consumes it, so the chain is DESIGN.md → design-tokens → gate →
+`styles.css` and a change anywhere in it fails the build. Confirmed with a
+negative test: editing a DESIGN.md hex makes the gate report the drift and exit
+non-zero.
+
+The prescribed mechanism, `design.md export --format css-tailwind`, is **lossy
+for this design system** at v0.4.0 — verified by running it. It emits no
+line-height at all, though DESIGN.md declares one for every one of the six type
+styles, and it emits `--font-<style>: "Inter"` per style rather than the fallback
+stacks the shell needs. Adopting its output wholesale would flatten the type
+scale and strand `--spacing-editor-line`, which is documented to track
+`--text-code--line-height`. The invariant L2 exists to protect — the theme cannot
+drift from the document — is met either way; single-sourcing plus a failing gate
+gets there without a lossy round-trip. The official `lint` still runs in CI, so
+the format is validated by the tool that owns it. **If a later version of
+design.md carries line-height, revisit: generating is still preferable to
+verifying.**
+
+Note the scope: the _palette_ is single-sourced. `styles.css` is not generated,
+because it also holds component classes, focus rings and reduced-motion rules
+that no exporter produces.
+
+**L4 and L5 — done.** Both were SPEC §8 MVP items the shell simply lacked.
+
+- **L5, pan.** SPEC §9 requires pan "via keyboard", so the viewport itself is the
+  control: focusable, named, arrow-key driven, with Shift taking a coarser step.
+  Not `role="application"`, which would suppress the screen reader's own
+  arrow-key navigation inside it. Pan directions are physical and are **not**
+  mirrored under RTL — unlike the toolbars' roving focus, which is navigation
+  among items and does follow reading order. Found a latent duplicate while
+  there: "fit to frame" and "reset zoom" had byte-identical handlers, leaving fit
+  unable to do the one thing that distinguishes it. Fit now restores both axes.
+- **L4, save.** The control stays present in every state and renames itself
+  rather than disappearing — "Save document" / "No unsaved changes" / "Retry
+  saving document" — which also gives `SaveStateBadge`'s state a second,
+  non-visual expression. `onSave` is an optional prop like `onExport`: the shell
+  exposes the seam, the host injects the handler.
+
+**Still open in Phase 3:** Storybook per **Q9**, and the remaining SPEC §4
+packages — `acp-client`, `transport`, `test-agents`. Those three need real
+logic, which is a different kind of work from hardening a shell.
+
+---
+
 ## 1. Findings
 
 Severity: **blocker** (contract cannot ship / gates cannot pass) · **contract-violation** (breaks a CLAUDE.md, DESIGN.md, or SPEC invariant) · **cleanup** (dead weight, inconsistency).
@@ -318,16 +396,16 @@ Contract-permitted set: React, Tailwind v4, Radix/shadcn, i18next, react-resizab
 
 ### L. SPEC conformance (new this pass)
 
-| ID  | Sev                | Finding                                                                                                                                                                                                                                                                                                                                                                                                    | Evidence                                       | Proposed fix                                                                                                                                 | Effort |
-| --- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| L1  | contract-violation | **No CSP.** SPEC §12 requires "CSP on renderer". There is no CSP meta tag or header anywhere.                                                                                                                                                                                                                                                                                                              | `__root.tsx:80-107`; no `index.html`           | Add a strict CSP meta to the new `index.html` in A1.                                                                                         | S      |
-| L2  | contract-violation | **`styles.css` is hand-authored where SPEC §9 requires it generated.** `packages/design-tokens` is meant to hold DESIGN.md as the single source of truth, with `design.md export --format css-tailwind` producing the Tailwind v4 theme the shell consumes. Today the `@theme` block is hand-written, which is how E2–E5 drifted in unnoticed.                                                             | `styles.css:14-116` vs SPEC §9                 | Phase 3: stand up `packages/design-tokens` and generate the theme. Until then, the Phase 2 `design.md lint` + `diff` gates are the backstop. | M      |
-| L3  | cleanup            | **testid case convention mismatch.** SPEC §10.1 gives `editor.gutter.error-badge` (kebab-case element segment); the registry uses `editor.gutter.errorBadge` (camelCase) throughout.                                                                                                                                                                                                                       | `SPEC §10.1` vs `testids.ts`                   | See Q3 — pick one and make it uniform before tests are written against it.                                                                   | S      |
-| L4  | cleanup            | **No Save affordance.** SPEC §8 MVP lists "Open/save/watch local files". `TopToolbar` has Export but no Save control; `SaveStateBadge` displays save state with no way to act on it.                                                                                                                                                                                                                       | `TopToolbar.tsx:47-112`; `SaveStateBadge.tsx`  | Add a Save control + testid, or confirm it is menu-only in Electron.                                                                         | S      |
-| L5  | cleanup            | **No pan controls.** SPEC §8 MVP requires "Pan/zoom on diagrams" and §9 requires "diagram pan/zoom **via keyboard**". `DiagramFrame` has four zoom controls and zero pan controls or testids.                                                                                                                                                                                                              | `DiagramFrame.tsx:163-207`; `testids.ts:56-59` | Add pan affordances + testids, or record the deferral in the fixture contract.                                                               | S      |
-| L6  | cleanup            | **No `accTitle`/`accDescr` seam.** SPEC §9: "Diagrams get accessible names/descriptions (Mermaid `accTitle`/`accDescr` surfaced and agent-fillable)". `DiagramBlock` has no fields for them, and `DiagramFrame` names the article `"Diagram {{id}}"` — an identifier, not an accessible name.                                                                                                              | `types/shell.ts:18-26`; `DiagramFrame.tsx:50`  | Add `accTitle?` / `accDescr?` to `DiagramBlock`; prefer them for the accessible name. Types-only, safe now.                                  | S      |
-| L7  | cleanup            | **`DocumentModel` is missing frontmatter fields.** SPEC §5 says frontmatter carries theme, mermaid version, and direction/RTL hints. The type has `mermaidVersion` only — no `theme`, no `direction`. This is also where the B4/Q4 RTL ownership question resolves.                                                                                                                                        | `types/shell.ts:28-40` vs SPEC §5              | **done (Phase 2)** — Q4 answered, so both were added; `theme` is the _diagram_ theme, not `ThemePreference`.                                 | S      |
-| L8  | — (context)        | **M0 never happened.** SPEC §14 sequences M0 ("Monorepo, tokens, testid registry, transcript-player harness, CI gates — _seams before shell_") **before** M1's shell generation. The shell exists; `packages/design-tokens`, the transcript player, and every CI gate do not. Storybook (SPEC §10.4, "per shell component, a11y addon on") is likewise absent and is not in CLAUDE.md's Phase 2 gate list. | SPEC §10.4, §14                                | This is why CLAUDE.md has a Phase 3. Q9 settled Storybook: deferred there too, with the rest of §10.                                         | —      |
+| ID  | Sev                | Finding                                                                                                                                                                                                                                                                                                                                                                                                    | Evidence                                       | Proposed fix                                                                                                                                                                                                                                                              | Effort |
+| --- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| L1  | contract-violation | **No CSP.** SPEC §12 requires "CSP on renderer". There is no CSP meta tag or header anywhere.                                                                                                                                                                                                                                                                                                              | `__root.tsx:80-107`; no `index.html`           | Add a strict CSP meta to the new `index.html` in A1.                                                                                                                                                                                                                      | S      |
+| L2  | contract-violation | **`styles.css` is hand-authored where SPEC §9 requires it generated.** `packages/design-tokens` is meant to hold DESIGN.md as the single source of truth, with `design.md export --format css-tailwind` producing the Tailwind v4 theme the shell consumes. Today the `@theme` block is hand-written, which is how E2–E5 drifted in unnoticed.                                                             | `styles.css:14-116` vs SPEC §9                 | **done (Phase 3)** — `packages/design-tokens` reads the palette from DESIGN.md and the contrast gate consumes it. Not via `design.md export`, which drops line-height; see the Phase 3 section. Until then, the Phase 2 `design.md lint` + `diff` gates are the backstop. | M      |
+| L3  | cleanup            | **testid case convention mismatch.** SPEC §10.1 gives `editor.gutter.error-badge` (kebab-case element segment); the registry uses `editor.gutter.errorBadge` (camelCase) throughout.                                                                                                                                                                                                                       | `SPEC §10.1` vs `testids.ts`                   | See Q3 — pick one and make it uniform before tests are written against it.                                                                                                                                                                                                | S      |
+| L4  | cleanup            | **No Save affordance.** SPEC §8 MVP lists "Open/save/watch local files". `TopToolbar` has Export but no Save control; `SaveStateBadge` displays save state with no way to act on it.                                                                                                                                                                                                                       | `TopToolbar.tsx:47-112`; `SaveStateBadge.tsx`  | **done (Phase 3)** — Save control added; renames itself per state rather than vanishing.                                                                                                                                                                                  | S      |
+| L5  | cleanup            | **No pan controls.** SPEC §8 MVP requires "Pan/zoom on diagrams" and §9 requires "diagram pan/zoom **via keyboard**". `DiagramFrame` has four zoom controls and zero pan controls or testids.                                                                                                                                                                                                              | `DiagramFrame.tsx:163-207`; `testids.ts:56-59` | **done (Phase 3)** — the viewport is the control: focusable, arrow-key pan, Shift for a coarser step.                                                                                                                                                                     | S      |
+| L6  | cleanup            | **No `accTitle`/`accDescr` seam.** SPEC §9: "Diagrams get accessible names/descriptions (Mermaid `accTitle`/`accDescr` surfaced and agent-fillable)". `DiagramBlock` has no fields for them, and `DiagramFrame` names the article `"Diagram {{id}}"` — an identifier, not an accessible name.                                                                                                              | `types/shell.ts:18-26`; `DiagramFrame.tsx:50`  | Add `accTitle?` / `accDescr?` to `DiagramBlock`; prefer them for the accessible name. Types-only, safe now.                                                                                                                                                               | S      |
+| L7  | cleanup            | **`DocumentModel` is missing frontmatter fields.** SPEC §5 says frontmatter carries theme, mermaid version, and direction/RTL hints. The type has `mermaidVersion` only — no `theme`, no `direction`. This is also where the B4/Q4 RTL ownership question resolves.                                                                                                                                        | `types/shell.ts:28-40` vs SPEC §5              | **done (Phase 2)** — Q4 answered, so both were added; `theme` is the _diagram_ theme, not `ThemePreference`.                                                                                                                                                              | S      |
+| L8  | — (context)        | **M0 never happened.** SPEC §14 sequences M0 ("Monorepo, tokens, testid registry, transcript-player harness, CI gates — _seams before shell_") **before** M1's shell generation. The shell exists; `packages/design-tokens`, the transcript player, and every CI gate do not. Storybook (SPEC §10.4, "per shell component, a11y addon on") is likewise absent and is not in CLAUDE.md's Phase 2 gate list. | SPEC §10.4, §14                                | This is why CLAUDE.md has a Phase 3. Q9 settled Storybook: deferred there too, with the rest of §10.                                                                                                                                                                      | —      |
 
 ### M. Documentation defects (`docs/SPEC.md`, Lovable-authored)
 
