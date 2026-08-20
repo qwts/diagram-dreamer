@@ -18,13 +18,21 @@ import type { DiagramBlock, DocumentModel, SaveState } from "../index";
 export const DEFAULT_MERMAID_VERSION = "11";
 
 /**
- * Opening fence for a Mermaid block. Three or more backticks, then `mermaid`,
- * optionally followed by an info string — Markdown allows one and Mermaid
+ * A fenced code block's opening or closing line. Backticks or tildes, three or
+ * more, optionally followed by an info string — Markdown allows one and Mermaid
  * ignores it, so refusing to parse the block would be stricter than either.
  */
-const OPEN_FENCE = /^(\s*)(`{3,})\s*mermaid\b[^`]*$/i;
-/** Any fence at all, so a non-Mermaid block cannot swallow the one after it. */
-const ANY_FENCE = /^\s*(`{3,})\s*(\S*)/;
+const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(\S*)(.*)$/;
+
+/** A list marker, and the whitespace that sets its content indent. */
+const LIST_ITEM = /^([ \t]*)([-*+]|\d{1,9}[.)])([ \t]+)/;
+
+const LEADING_SPACE = /^[ \t]*/;
+
+/** CommonMark's limit: at four, the line is indented code rather than a fence. */
+const MAX_FENCE_INDENT = 3;
+
+const MERMAID_INFO = /^mermaid\b/i;
 
 /** `key: value`, unquoted or quoted. Flat by design — see `readFrontmatter`. */
 const FRONTMATTER_ENTRY = /^([A-Za-z][\w-]*)\s*:\s*("?)(.*?)\2\s*$/;
@@ -64,6 +72,67 @@ function hash(value: string): string {
     h = Math.imul(h, 0x01000193);
   }
   return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+interface Fence {
+  /** Columns of indentation, tabs expanded. */
+  indent: number;
+  /** The run of fence characters, whose length a closing fence must match or beat. */
+  marker: string;
+  char: string;
+  info: string;
+  /** Whatever followed the info string; a closing fence has none. */
+  rest: string;
+}
+
+/** Tabs advance to the next multiple of four, as CommonMark counts them. */
+function columns(indent: string): number {
+  let width = 0;
+  for (const character of indent) {
+    width = character === "\t" ? width + 4 - (width % 4) : width + 1;
+  }
+  return width;
+}
+
+function readFence(line: string): Fence | null {
+  const match = FENCE.exec(line);
+  if (!match) return null;
+  const marker = match[2] ?? "";
+  const character = marker[0] ?? "`";
+  const info = match[3] ?? "";
+  const rest = match[4] ?? "";
+  // A backtick fence's info string may not contain a backtick, or every
+  // `inline code` span in a paragraph would open a code block. Tilde fences
+  // carry no such restriction.
+  if (character === "`" && (info.includes("`") || rest.includes("`"))) return null;
+  return { indent: columns(match[1] ?? ""), marker, char: character, info, rest };
+}
+
+const closes = (fence: Fence, open: Fence): boolean =>
+  fence.char === open.char &&
+  fence.marker.length >= open.marker.length &&
+  fence.info === "" &&
+  fence.rest.trim() === "";
+
+/**
+ * The indentation a fence on the next line is measured from.
+ *
+ * CommonMark's three-space rule is relative to the enclosing block, not to the
+ * left margin: a diagram inside a list item is legal at the list's content
+ * indent plus three. Without this, applying the rule literally would silently
+ * drop every diagram written inside a bullet — trading the bug it fixes for a
+ * worse one.
+ */
+function containerIndent(line: string, current: number): number {
+  if (line.trim() === "") return current;
+  const item = LIST_ITEM.exec(line);
+  if (item) {
+    const spaces = columns(item[3] ?? " ");
+    // Five or more spaces after the marker start indented code inside the item,
+    // so the content indent is the marker plus one.
+    return columns(item[1] ?? "") + (item[2] ?? "").length + (spaces >= 5 ? 1 : spaces);
+  }
+  return columns(LEADING_SPACE.exec(line)?.[0] ?? "") < current ? 0 : current;
 }
 
 /**
@@ -198,35 +267,40 @@ export function parseDocument(text: string, options: ParseOptions = {}): ParsedD
   const blocks: DiagramBlock[] = [];
   const seen = new Set<string>();
 
+  let container = 0;
+
   for (let i = end; i < lines.length; i += 1) {
     const line = lines[i] ?? "";
-    const open = OPEN_FENCE.exec(line);
-    if (!open) {
+    const fence = readFence(line);
+    // Too far in to be a fence: this is an indented code block, and a
+    // ```mermaid inside one is somebody's example of Mermaid source.
+    if (!fence || fence.indent > container + MAX_FENCE_INDENT) {
+      container = containerIndent(line, container);
+      continue;
+    }
+
+    if (!MERMAID_INFO.test(fence.info)) {
       // A fence that is not Mermaid still opens a code block, and a ```mermaid
-      // *inside* it is example text, not a diagram. Skip to its close.
-      const other = ANY_FENCE.exec(line);
-      if (other?.[1]) {
-        const width = other[1].length;
-        for (i += 1; i < lines.length; i += 1) {
-          const close = ANY_FENCE.exec(lines[i] ?? "");
-          if (close?.[1] && close[1].length >= width && (close[2] ?? "") === "") break;
-        }
+      // *inside* it is example text, not a diagram. Skip to its close — which
+      // must use the opener's character, so a tilde-fenced example holding a
+      // backtick-fenced diagram is skipped whole.
+      for (i += 1; i < lines.length; i += 1) {
+        const candidate = readFence(lines[i] ?? "");
+        if (candidate && closes(candidate, fence)) break;
       }
       continue;
     }
 
-    const width = (open[2] ?? "```").length;
     const startLine = i + 1;
     const body: string[] = [];
     let closed = false;
     for (i += 1; i < lines.length; i += 1) {
-      const candidate = lines[i] ?? "";
-      const close = ANY_FENCE.exec(candidate);
-      if (close?.[1] && close[1].length >= width && (close[2] ?? "") === "") {
+      const candidate = readFence(lines[i] ?? "");
+      if (candidate && closes(candidate, fence)) {
         closed = true;
         break;
       }
-      body.push(candidate);
+      body.push(lines[i] ?? "");
     }
     // An unclosed fence runs to the end of the document, which is what a
     // Markdown renderer does and what an author mid-typing expects.

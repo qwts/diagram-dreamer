@@ -196,6 +196,17 @@ export const agentDisconnected: AgentSession = {
   items: [],
 };
 
+/**
+ * The block the agent fixtures point at, and the lines it occupies.
+ *
+ * Read from the parsed document rather than written out, because block ids are
+ * content hashes now and the line numbers move whenever the fixture prose does.
+ * A literal would go stale the first time either changed, and the context chip
+ * would name a block that is not in the document.
+ */
+const contextBlock = multiBlockDocument.blocks[0]!;
+const contextBlockId = contextBlock.id;
+
 export const agentIdle: AgentSession = {
   state: "idle",
   agentName: "Claude Code",
@@ -205,7 +216,7 @@ export const agentIdle: AgentSession = {
 export const agentStreaming: AgentSession = {
   state: "streaming",
   agentName: "Claude Code",
-  contextBlockId: "block-1",
+  contextBlockId,
   items: [
     ...baseItems,
     { kind: "text", id: "item-2", bodyKey: "agent.message.planIntro" },
@@ -230,7 +241,7 @@ export const agentStreaming: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "running",
     },
   ],
@@ -248,14 +259,14 @@ export const agentPermissionPending: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "pending",
     },
   ],
   permission: {
     id: "perm-1",
     toolName: "fs/write",
-    targetSummary: "docs/architecture.md — replace lines 5-10",
+    targetSummary: `docs/architecture.md — replace lines ${contextBlock.startLine}-${contextBlock.endLine}`,
   },
 };
 
@@ -299,7 +310,7 @@ export const agentPermissionResolved: AgentSession = {
       kind: "toolCall",
       id: "item-5",
       toolName: "fs/write",
-      target: "docs/architecture.md#block-1",
+      target: `docs/architecture.md#${contextBlockId}`,
       status: "success",
     },
   ],
