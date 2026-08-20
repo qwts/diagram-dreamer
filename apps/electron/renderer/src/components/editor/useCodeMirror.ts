@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Compartment, EditorState, type Extension } from "@codemirror/state";
+import { Annotation, Compartment, EditorState, type Extension } from "@codemirror/state";
 import {
   EditorView,
   drawSelection,
@@ -47,6 +47,13 @@ interface Options {
   onCursorChange: (cursor: Cursor) => void;
 }
 
+/**
+ * Marks a change as coming from outside the editor. Loading a different
+ * document is not something the user typed: it must not reach `onChange`,
+ * which would immediately mark the freshly loaded document as edited.
+ */
+const External = Annotation.define<boolean>();
+
 const localisedExtensions = (ariaLabel: string, hint: string): Extension => [
   EditorView.contentAttributes.of({ "aria-label": ariaLabel }),
   placeholder(hint),
@@ -86,6 +93,8 @@ export function useCodeMirror(options: Options) {
   latest.current = options;
 
   const wrapping = useRef(new Compartment()).current;
+  // Reconfiguring this resets the undo stack — see the sync effect.
+  const historyKeeping = useRef(new Compartment()).current;
   // Everything the user's language changes. One compartment, because they are
   // always reconfigured together and two would only be two chances to forget.
   const localised = useRef(new Compartment()).current;
@@ -94,7 +103,7 @@ export function useCodeMirror(options: Options) {
     if (!container) return;
 
     const extensions: Extension[] = [
-      history(),
+      historyKeeping.of(history()),
       drawSelection(),
       highlightActiveLine(),
       indentOnInput(),
@@ -117,7 +126,10 @@ export function useCodeMirror(options: Options) {
       wrapping.of(latest.current.wrap ? EditorView.lineWrapping : []),
       localised.of(localisedExtensions(latest.current.ariaLabel, latest.current.placeholder)),
       EditorView.updateListener.of((update) => {
-        if (update.docChanged) latest.current.onChange(update.state.doc.toString());
+        const external = update.transactions.some((transaction) =>
+          transaction.annotation(External),
+        );
+        if (update.docChanged && !external) latest.current.onChange(update.state.doc.toString());
         if (update.docChanged || update.selectionSet) {
           const head = update.state.selection.main.head;
           const line = update.state.doc.lineAt(head);
@@ -141,7 +153,7 @@ export function useCodeMirror(options: Options) {
       viewRef.current = null;
       view.destroy();
     };
-  }, [container, wrapping, localised]);
+  }, [container, wrapping, historyKeeping, localised]);
 
   // These four effects all depend on `container` even though they never read
   // it. It is when the view exists: the container arrives on the second render,
@@ -160,8 +172,13 @@ export function useCodeMirror(options: Options) {
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: valueRef.current },
       selection: { anchor: 0 },
+      annotations: External.of(true),
+      // Reconfiguring `history()` builds a fresh history state. Without it,
+      // undo after opening a second document walks back into the first one's
+      // edits and applies them under the new document's identity.
+      effects: historyKeeping.reconfigure(history()),
     });
-  }, [container, options.syncKey]);
+  }, [container, historyKeeping, options.syncKey]);
 
   useEffect(() => {
     const view = viewRef.current;

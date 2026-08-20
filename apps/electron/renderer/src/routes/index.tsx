@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { parseDocument, toDocumentModel } from "@vellum/core";
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
@@ -12,7 +12,7 @@ import {
   type AgentFixtureKey,
   type DocumentFixtureKey,
 } from "@/fixtures";
-import type { AgentSession, DocumentModel, PermissionResolution } from "@/types/shell";
+import type { AgentSession, Diagnostic, DocumentModel, PermissionResolution } from "@/types/shell";
 
 interface WorkspaceSearch {
   doc?: DocumentFixtureKey;
@@ -57,6 +57,9 @@ interface Draft {
   text: string;
 }
 
+/** What the sandbox reported about one block, keyed by that block's id. */
+type RenderFailures = ReadonlyMap<string, { message: string; line: number }>;
+
 function WorkspacePage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -75,6 +78,34 @@ function WorkspacePage() {
   // render the new document once with the old document's edits still applied.
   const settledText = settled?.key === documentKey ? settled.text : null;
   const liveCursor = cursor?.key === documentKey ? cursor : null;
+
+  const [failures, setFailures] = useState<RenderFailures>(new Map());
+
+  /**
+   * Only Mermaid knows a block is broken, and it only finds out at render
+   * time. Collecting what it reports here is what lets the gutter and the
+   * status bar agree with the preview instead of calling a red document clean.
+   *
+   * Identity-stable, and returns the same map when nothing changed: the
+   * findings feed back into the model that produced the render, so a callback
+   * that churned would loop.
+   */
+  const reportRenderDiagnostic = useCallback(
+    (blockId: string, failure: { message: string; line: number } | null) => {
+      setFailures((current) => {
+        const existing = current.get(blockId);
+        if (!failure) {
+          if (!existing) return current;
+          const next = new Map(current);
+          next.delete(blockId);
+          return next;
+        }
+        if (existing?.message === failure.message && existing.line === failure.line) return current;
+        return new Map(current).set(blockId, failure);
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!draft || draft.key !== documentKey) return;
@@ -105,10 +136,36 @@ function WorkspacePage() {
             },
             parseDocument(settledText),
           );
+    // Blocks the document no longer contains drop out here rather than being
+    // pruned on unmount: a block's id is its content hash, so an edited block
+    // is a different block and its old finding is about text that is gone.
+    const live: Diagnostic[] = base.blocks.flatMap((block) => {
+      const failure = failures.get(block.id);
+      return failure
+        ? [
+            {
+              id: `render-${block.id}`,
+              severity: "error" as const,
+              messageKey: "preview.error.mermaid",
+              messageValues: { message: failure.message },
+              line: failure.line,
+            },
+          ]
+        : [];
+    });
+
+    const withFindings =
+      live.length === 0
+        ? base
+        : {
+            ...base,
+            diagnostics: [...base.diagnostics, ...live].sort((a, b) => a.line - b.line),
+          };
+
     return liveCursor
-      ? { ...base, cursor: { line: liveCursor.line, column: liveCursor.column } }
-      : base;
-  }, [fixture, settledText, liveCursor]);
+      ? { ...withFindings, cursor: { line: liveCursor.line, column: liveCursor.column } }
+      : withFindings;
+  }, [fixture, settledText, liveCursor, failures]);
 
   const resolvePermission = (id: string, resolution: PermissionResolution) =>
     setSession((current) => {
@@ -130,6 +187,7 @@ function WorkspacePage() {
         session={activeSession}
         onEdit={(text) => setDraft({ key: documentKey, text })}
         onCursorChange={(next) => setCursor({ key: documentKey, ...next })}
+        onRenderDiagnostic={reportRenderDiagnostic}
         onAskAgent={(blockId) => setSession({ ...activeSession, contextBlockId: blockId })}
         onClearContext={() => {
           const { contextBlockId: _omit, ...rest } = activeSession;

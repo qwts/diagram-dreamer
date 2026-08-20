@@ -37,6 +37,9 @@ export function EditorHost({
   // Translated here rather than inside CodeMirror: the editor renders into DOM
   // React does not own, so anything it displays has to arrive already in the
   // user's language (invariant 4).
+  const badgeLabel = (severity: EditorDiagnostic["severity"], line: number) =>
+    t(severity === "error" ? "editor.gutter.errorBadge" : "editor.gutter.warningBadge", { line });
+
   const diagnostics = useMemo<EditorDiagnostic[]>(
     () =>
       document.diagnostics.map((diagnostic) => ({
@@ -55,8 +58,7 @@ export function EditorHost({
     initialCursor: document.cursor,
     ariaLabel: t("editor.content.label", { fileName: document.fileName }),
     placeholder: t("editor.placeholder"),
-    badgeLabel: (severity, line) =>
-      t(severity === "error" ? "editor.gutter.errorBadge" : "editor.gutter.warningBadge", { line }),
+    badgeLabel,
     onChange: (next) => onChange?.(next),
     onCursorChange: (cursor) => onCursorChange?.(cursor),
   });
@@ -97,6 +99,40 @@ export function EditorHost({
             <Type className="size-4" aria-hidden="true" />
           </VellumButton>
         </Toolbar>
+      </div>
+
+      {/*
+       * The gutter badges are decoration as far as assistive technology is
+       * concerned: CodeMirror renders them inside `.cm-gutters`, which carries
+       * `aria-hidden`, and a role or label on a descendant cannot undo a hidden
+       * ancestor. This is where the same findings are actually announced —
+       * politely, as the a11y contract requires for diagnostics.
+       */}
+      <div
+        data-testid={testIds.editor.announcer}
+        // `log`, not `status`: the status bar is already the page's one
+        // status landmark, and a second would have the workspace announcing
+        // itself from two places. A log is the closer fit anyway — findings
+        // accumulate and clear rather than replacing a single value.
+        role="log"
+        aria-live="polite"
+        aria-label={t("editor.diagnostics.label")}
+        className="sr-only"
+      >
+        {diagnostics.length === 0 ? (
+          t("editor.diagnostics.none")
+        ) : (
+          <ul>
+            {diagnostics.map((diagnostic) => (
+              <li key={`${diagnostic.line}-${diagnostic.message}`}>
+                {t("editor.diagnostics.entry", {
+                  label: badgeLabel(diagnostic.severity, diagnostic.line),
+                  message: diagnostic.message,
+                })}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div

@@ -120,8 +120,73 @@ test("model diagnostics show in the gutter beside their line", async ({ page }) 
 
   const badges = page.getByTestId("editor.gutter.error-badge");
   await expect(badges).toHaveCount(2);
-  // Severity is named, not just coloured: one error and one warning, each
-  // announcing its own line.
   await expect(badges.first()).toHaveAttribute("aria-label", /11/);
   await expect(badges.last()).toHaveAttribute("aria-label", /21/);
 });
+
+test("diagnostics are announced, not only drawn", async ({ page }) => {
+  await page.goto("/?state=failed-idle");
+
+  // The gutter badges are invisible to assistive technology — CodeMirror marks
+  // `.cm-gutters` aria-hidden, and a label on a descendant cannot undo a hidden
+  // ancestor. Asserting the badge's `aria-label` therefore proves nothing about
+  // what is announced, which is what this test is for.
+  const announcer = page.getByTestId("editor.host.announcer");
+  await expect(announcer).toHaveAttribute("aria-live", "polite");
+  await expect(announcer).toContainText("Error on line 21");
+  await expect(announcer).toContainText("Warning on line 11");
+
+  // And the announcement is reachable through the accessibility tree, which is
+  // the part a DOM query cannot tell you.
+  const entries = page.getByRole("log", { name: "Diagram diagnostics" }).getByRole("listitem");
+  await expect(entries).toHaveCount(2);
+});
+
+test("a diagram the sandbox rejects reaches the gutter and the status bar", async ({ page }) => {
+  await page.goto("/?state=broken-idle");
+
+  // The `broken` fixture's model is clean: every block is "ready" and it
+  // carries no diagnostic, because nothing had tried to render yet. Only
+  // Mermaid knows, and only at render time — so this is the path where the
+  // preview used to show a red card while the rest of the workspace called the
+  // document fine.
+  await expect(page.getByTestId("preview.diagram-frame.error-card")).toBeVisible({
+    timeout: 30_000,
+  });
+
+  await expect(page.getByTestId("editor.gutter.error-badge")).toHaveCount(1, { timeout: 10_000 });
+  await expect(page.getByTestId("editor.host.announcer")).toContainText("Error on line 21");
+  await expect(page.getByTestId("workspace.status-bar.diagnostics-count")).not.toContainText("0");
+});
+
+test("a freshly loaded document starts clean", async ({ page }) => {
+  await page.goto("/?doc=multi");
+  await expect(page.locator(".cm-content")).toBeVisible();
+
+  await page.locator(".cm-content").click();
+  await page.keyboard.type("XYZZY");
+  await expect(page.locator(".cm-content")).toContainText("XYZZY");
+
+  await page.goto("/?doc=empty");
+  await expect(page.locator(".cm-content")).toContainText("Untitled");
+  await expect(page.getByTestId("workspace.toolbar.save-state")).not.toContainText("Unsaved");
+
+  await page.locator(".cm-content").click();
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(page.locator(".cm-content")).not.toContainText("XYZZY");
+});
+
+/**
+ * Not covered here: loading a different document *into a live editor*, where
+ * `syncKey` changes and the view is rewritten in place. The replacement is
+ * annotated as external and resets the undo history, because otherwise it
+ * would mark the new document as edited and let one undo restore the previous
+ * document's text under the new document's identity.
+ *
+ * No test drives that branch, because nothing in the built app reaches it: the
+ * router uses memory history and the document is chosen at load, so every
+ * document change today is a full page load with a fresh editor — verified by
+ * removing the history reset and watching the test above still pass. It
+ * becomes reachable with File → Open, and covering it belongs with that work
+ * rather than being simulated here.
+ */

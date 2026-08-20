@@ -21,6 +21,8 @@ interface WorkspaceLayoutProps {
   onConnectAgent?: (() => void) | undefined;
   onEdit?: ((value: string) => void) | undefined;
   onCursorChange?: ((cursor: { line: number; column: number }) => void) | undefined;
+  onRenderDiagnostic?:
+    ((blockId: string, failure: { message: string; line: number } | null) => void) | undefined;
 }
 
 export function WorkspaceLayout({
@@ -34,6 +36,7 @@ export function WorkspaceLayout({
   onConnectAgent,
   onEdit,
   onCursorChange,
+  onRenderDiagnostic,
 }: WorkspaceLayoutProps) {
   const { t, i18n } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -104,7 +107,12 @@ export function WorkspaceLayout({
             data-testid={testIds.workspace.resizeHandle}
           />
           <ResizablePanel defaultSize={agentOpen ? "37" : "55"} minSize="25">
-            <PreviewPane blocks={doc.blocks} theme={doc.theme} onAskAgent={onAskAgent} />
+            <PreviewPane
+              blocks={doc.blocks}
+              theme={doc.theme}
+              onAskAgent={onAskAgent}
+              onRenderDiagnostic={onRenderDiagnostic}
+            />
           </ResizablePanel>
 
           {agentOpen ? (

@@ -64,6 +64,11 @@
     "placeholder": "Start typing, or paste a Mermaid diagram.",
     "content": {
       "label": "Source of {fileName}"
+    },
+    "diagnostics": {
+      "label": "Diagram diagnostics",
+      "entry": "{label}. {message}",
+      "none": "No diagram diagnostics"
     }
   },
   "preview": {
