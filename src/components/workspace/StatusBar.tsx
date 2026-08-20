@@ -14,6 +14,10 @@ import type { DocumentModel } from "@/types/shell";
 export function StatusBar({ document }: { document: DocumentModel }) {
   const { t } = useTranslation();
   const count = document.diagnostics.length;
+  // Warnings must never borrow danger tokens (CLAUDE.md invariant 3), so the
+  // count only goes red when at least one diagnostic is actually an error.
+  const hasError = document.diagnostics.some((diagnostic) => diagnostic.severity === "error");
+  const countTone = count === 0 ? "" : hasError ? "text-danger" : "text-warning";
 
   return (
     <div
@@ -43,7 +47,7 @@ export function StatusBar({ document }: { document: DocumentModel }) {
       </span>
       <span
         data-testid={testIds.workspace.diagnosticsCount}
-        className={`inline-flex items-center gap-xs ${count > 0 ? "text-danger" : ""}`}
+        className={`inline-flex items-center gap-xs ${countTone}`}
       >
         <CircleAlert className="size-3.5" aria-hidden="true" />
         {count > 0

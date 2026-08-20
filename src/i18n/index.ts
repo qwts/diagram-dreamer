@@ -5,8 +5,14 @@ import en from "./en.json";
 
 export const RTL_LANGUAGES = ["ar", "he", "fa", "ur"];
 
-export const isRtlLanguage = (language: string): boolean =>
-  RTL_LANGUAGES.includes(language.split("-")[0] ?? language);
+/**
+ * Accepts any BCP-47 shape the host might hand us — "ar", "AR-EG", "ar_EG" —
+ * since the tag is not guaranteed to arrive normalised.
+ */
+export const isRtlLanguage = (language: string): boolean => {
+  const primary = language.toLowerCase().split(/[-_]/)[0];
+  return primary !== undefined && RTL_LANGUAGES.includes(primary);
+};
 
 if (!i18n.isInitialized) {
   void i18n

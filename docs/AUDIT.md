@@ -70,8 +70,9 @@ gate below was run, not assumed:
 | `eslint .` | **0 errors, 0 warnings** |
 | `npm run check:contrast` | 36 token pairs, both themes, all ≥ AA; values match `styles.css` |
 | `vite build` | `index.html` + assets, **no server or worker bundle** |
-| `scripts/smoke-fixtures.mjs` | all 15 `?state=` combinations reachable |
-| In-browser | light + dark + RTL rendered, **zero console errors, zero raw keys** |
+| In-browser | light + dark + RTL rendered across several `?state=` fixtures, **zero console errors, zero raw keys** |
+
+Per-fixture render assertions are **not** yet automated — that is the Phase 2 Playwright gate. An earlier `scripts/smoke-fixtures.mjs` was removed during review: it only `fetch`ed the dev server, which returns the same `index.html` for every URL, so it proved the server was up and nothing about routing or rendering.
 
 **Resolved:** A1–A5, B1–B6, C1–C3, D1–D4, E2–E6, E9–E11, F1–F3, F5, H1–H3, I1–I3,
 K2, K3, L1, L3, L6, M1, and the Q1 fixture-seam question.

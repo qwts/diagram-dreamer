@@ -13,10 +13,22 @@ import { getRouter } from "./router";
  *
  * The host still decides which entry to open with. Seeding it from the current
  * location keeps the `?state=` / `?doc=` / `?agent=` fixture seam addressable
- * when the app is served over http for the test gates; under file:// there is
- * no query string and this collapses to "/".
+ * when the app is served over http for the test gates.
+ *
+ * Electron loads the built renderer with `loadFile`, so `location.pathname` is
+ * a filesystem path ending in `.html` — feeding that to the router would start
+ * it on a route that does not exist and render the error boundary instead of
+ * the workspace. Only a path that looks like an app route is used; anything
+ * else falls back to "/". Keyed on the shape of the path rather than the
+ * protocol, so this stays free of environment detection.
  */
-const initialEntry = `${window.location.pathname}${window.location.search}` || "/";
+function initialEntryFromLocation(): string {
+  const { pathname, search } = window.location;
+  const looksLikeAppRoute = pathname.startsWith("/") && !pathname.split("/").pop()?.includes(".");
+  return `${looksLikeAppRoute ? pathname : "/"}${search}`;
+}
+
+const initialEntry = initialEntryFromLocation();
 const router = getRouter({ history: createMemoryHistory({ initialEntries: [initialEntry] }) });
 
 const rootElement = document.getElementById("root");
