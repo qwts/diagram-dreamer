@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { parseDocument, toDocumentModel } from "@vellum/core";
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { StateSwitcher } from "@/components/dev/StateSwitcher";
 import {
@@ -11,7 +12,7 @@ import {
   type AgentFixtureKey,
   type DocumentFixtureKey,
 } from "@/fixtures";
-import type { AgentSession, PermissionResolution } from "@/types/shell";
+import type { AgentSession, Diagnostic, DocumentModel, PermissionResolution } from "@/types/shell";
 
 interface WorkspaceSearch {
   doc?: DocumentFixtureKey;
@@ -35,6 +36,30 @@ export const Route = createFileRoute("/")({
   component: WorkspacePage,
 });
 
+/**
+ * How long the source has to stop changing before the preview re-renders.
+ *
+ * Long enough that a diagram is not repeatedly rebuilt from half-typed syntax
+ * — every one of those intermediate states is a parse error, so an undebounced
+ * preview spends most of a sentence showing a diagnostic card for text the
+ * author is still writing. Short enough to still read as live.
+ */
+const SETTLE_MS = 300;
+
+interface Cursor {
+  line: number;
+  column: number;
+}
+
+/** Edits, tagged with the fixture they belong to so switching documents drops them. */
+interface Draft {
+  key: DocumentFixtureKey;
+  text: string;
+}
+
+/** What the sandbox reported about one block, keyed by that block's id. */
+type RenderFailures = ReadonlyMap<string, { message: string; line: number }>;
+
 function WorkspacePage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -43,6 +68,104 @@ function WorkspacePage() {
 
   const [session, setSession] = useState<AgentSession | null>(null);
   const activeSession = session ?? agentFixtures[agentKey];
+
+  const fixture = documentFixtures[documentKey];
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [settled, setSettled] = useState<Draft | null>(null);
+  const [cursor, setCursor] = useState<(Cursor & { key: DocumentFixtureKey }) | null>(null);
+
+  // Tagging by fixture key instead of clearing in an effect: an effect would
+  // render the new document once with the old document's edits still applied.
+  const settledText = settled?.key === documentKey ? settled.text : null;
+  const liveCursor = cursor?.key === documentKey ? cursor : null;
+
+  const [failures, setFailures] = useState<RenderFailures>(new Map());
+
+  /**
+   * Only Mermaid knows a block is broken, and it only finds out at render
+   * time. Collecting what it reports here is what lets the gutter and the
+   * status bar agree with the preview instead of calling a red document clean.
+   *
+   * Identity-stable, and returns the same map when nothing changed: the
+   * findings feed back into the model that produced the render, so a callback
+   * that churned would loop.
+   */
+  const reportRenderDiagnostic = useCallback(
+    (blockId: string, failure: { message: string; line: number } | null) => {
+      setFailures((current) => {
+        const existing = current.get(blockId);
+        if (!failure) {
+          if (!existing) return current;
+          const next = new Map(current);
+          next.delete(blockId);
+          return next;
+        }
+        if (existing?.message === failure.message && existing.line === failure.line) return current;
+        return new Map(current).set(blockId, failure);
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!draft || draft.key !== documentKey) return;
+    const timer = setTimeout(() => {
+      setSettled(draft);
+    }, SETTLE_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [draft, documentKey]);
+
+  /**
+   * Untouched documents stay exactly as the fixture declares them, so every
+   * `?state=` gate still describes the state it is named after. Once edited,
+   * the model is whatever the parser makes of the text — including its
+   * diagnostics, since the fixture's were pinned to lines that have moved.
+   */
+  const document: DocumentModel = useMemo(() => {
+    const base =
+      settledText === null
+        ? fixture
+        : toDocumentModel(
+            {
+              id: fixture.id,
+              fileName: fixture.fileName,
+              filePath: fixture.filePath,
+              saveState: "unsaved",
+            },
+            parseDocument(settledText),
+          );
+    // Blocks the document no longer contains drop out here rather than being
+    // pruned on unmount: a block's id is its content hash, so an edited block
+    // is a different block and its old finding is about text that is gone.
+    const live: Diagnostic[] = base.blocks.flatMap((block) => {
+      const failure = failures.get(block.id);
+      return failure
+        ? [
+            {
+              id: `render-${block.id}`,
+              severity: "error" as const,
+              messageKey: "preview.error.mermaid",
+              messageValues: { message: failure.message },
+              line: failure.line,
+            },
+          ]
+        : [];
+    });
+
+    const withFindings =
+      live.length === 0
+        ? base
+        : {
+            ...base,
+            diagnostics: [...base.diagnostics, ...live].sort((a, b) => a.line - b.line),
+          };
+
+    return liveCursor
+      ? { ...withFindings, cursor: { line: liveCursor.line, column: liveCursor.column } }
+      : withFindings;
+  }, [fixture, settledText, liveCursor, failures]);
 
   const resolvePermission = (id: string, resolution: PermissionResolution) =>
     setSession((current) => {
@@ -60,8 +183,11 @@ function WorkspacePage() {
   return (
     <>
       <WorkspaceLayout
-        document={documentFixtures[documentKey]}
+        document={document}
         session={activeSession}
+        onEdit={(text) => setDraft({ key: documentKey, text })}
+        onCursorChange={(next) => setCursor({ key: documentKey, ...next })}
+        onRenderDiagnostic={reportRenderDiagnostic}
         onAskAgent={(blockId) => setSession({ ...activeSession, contextBlockId: blockId })}
         onClearContext={() => {
           const { contextBlockId: _omit, ...rest } = activeSession;
