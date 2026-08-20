@@ -126,7 +126,8 @@ export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps
                   "h-editor-line whitespace-pre",
                   wrap && "whitespace-pre-wrap",
                   diagnostic?.severity === "error" && "underline decoration-danger decoration-wavy",
-                  diagnostic?.severity === "warning" && "underline decoration-warning decoration-dotted",
+                  diagnostic?.severity === "warning" &&
+                    "underline decoration-warning decoration-dotted",
                 )}
               >
                 {line || "\u00a0"}

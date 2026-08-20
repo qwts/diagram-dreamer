@@ -122,7 +122,9 @@ export function AgentPanel({
                   className="flex items-center gap-sm text-body-sm text-lagoon"
                 >
                   <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-                  {session.streamingText ? t(session.streamingText) : t("agent.transcript.streaming")}
+                  {session.streamingText
+                    ? t(session.streamingText)
+                    : t("agent.transcript.streaming")}
                 </p>
               ) : null}
               {announcement ? (

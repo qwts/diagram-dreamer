@@ -23,6 +23,14 @@ export interface DiagramBlock {
   endLine: number;
   state: DiagramBlockState;
   diagnostic?: Diagnostic | undefined;
+  /**
+   * Mermaid `accTitle` / `accDescr`, surfaced from the diagram source (SPEC §9).
+   * Author-supplied content, so already in the document's language — never run
+   * through i18next. When accTitle is absent the frame falls back to naming the
+   * block by id, which identifies but does not describe it.
+   */
+  accTitle?: string | undefined;
+  accDescr?: string | undefined;
 }
 
 export interface DocumentModel {
@@ -39,11 +47,7 @@ export interface DocumentModel {
   mermaidVersion: string;
 }
 
-export type AgentConnectionState =
-  | "disconnected"
-  | "idle"
-  | "streaming"
-  | "awaiting-permission";
+export type AgentConnectionState = "disconnected" | "idle" | "streaming" | "awaiting-permission";
 
 export type ToolCallStatus = "pending" | "running" | "success" | "failed";
 export type PlanStepStatus = "pending" | "active" | "done";

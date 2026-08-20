@@ -47,7 +47,10 @@ export function DiagramFrame({
   return (
     <article
       data-testid={testIds.preview.diagramFrame}
-      aria-label={t("preview.frame.label", { id: block.id })}
+      // Prefer the diagram's own accessible name over the block id, which
+      // identifies without describing (SPEC §9).
+      aria-label={block.accTitle ?? t("preview.frame.label", { id: block.id })}
+      {...(block.accDescr !== undefined && { "aria-description": block.accDescr })}
       className="group rounded-md border border-border bg-surface-raised"
     >
       <header

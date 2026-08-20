@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VellumButton } from "@/components/common/VellumButton";
-import { useTheme, type ThemePreference } from "@/components/common/ThemeProvider";
+import { useTheme, type ThemePreference } from "@/components/common/theme-context";
 import { testIds } from "@/testids";
 import { cn } from "@/lib/utils";
 

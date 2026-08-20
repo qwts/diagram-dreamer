@@ -8,13 +8,16 @@ const tones: Record<AgentConnectionState, string> = {
   disconnected: "border-border bg-muted text-slate",
   idle: "border-border bg-surface-raised text-slate",
   streaming: "border-lagoon/50 bg-lagoon-surface text-lagoon",
-  "awaiting-permission": "border-lagoon bg-lagoon-surface text-lagoon ring-2 ring-lagoon vellum-pulse",
+  "awaiting-permission":
+    "border-lagoon bg-lagoon-surface text-lagoon ring-2 ring-lagoon vellum-pulse",
 };
 
 function Icon({ state }: { state: AgentConnectionState }) {
   if (state === "disconnected") return <BotOff className="size-3.5" aria-hidden="true" />;
-  if (state === "streaming") return <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />;
-  if (state === "awaiting-permission") return <ShieldQuestion className="size-3.5" aria-hidden="true" />;
+  if (state === "streaming")
+    return <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />;
+  if (state === "awaiting-permission")
+    return <ShieldQuestion className="size-3.5" aria-hidden="true" />;
   return <Bot className="size-3.5" aria-hidden="true" />;
 }
 

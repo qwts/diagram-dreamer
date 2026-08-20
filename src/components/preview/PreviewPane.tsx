@@ -21,7 +21,10 @@ export function PreviewPane({ blocks, ...handlers }: PreviewPaneProps) {
       data-testid={testIds.preview.root}
       className="flex h-full min-h-0 flex-col bg-paper"
     >
-      <div className="flex items-center justify-between border-b border-border bg-surface-raised px-md py-sm">
+      <div
+        data-testid={testIds.preview.toolbar}
+        className="flex items-center justify-between border-b border-border bg-surface-raised px-md py-sm"
+      >
         <span className="text-label-caps text-slate">{t("preview.title")}</span>
       </div>
 

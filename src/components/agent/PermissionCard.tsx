@@ -60,7 +60,10 @@ export function PermissionCard({ request, onResolve, onDismissFocus }: Permissio
         <ShieldQuestion className="mt-2xs size-4 shrink-0 text-lagoon" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="text-body-md font-medium text-ink">{t("agent.permission.title")}</p>
-          <p data-testid={testIds.agent.permissionTool} className="mt-xs font-mono text-body-sm text-ink">
+          <p
+            data-testid={testIds.agent.permissionTool}
+            className="mt-xs font-mono text-body-sm text-ink"
+          >
             {t("agent.permission.tool", { tool: request.toolName })}
           </p>
           <p

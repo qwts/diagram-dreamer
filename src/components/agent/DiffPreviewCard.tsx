@@ -37,7 +37,9 @@ export function DiffPreviewCard({
           <pre className="mt-xs overflow-auto rounded-sm border border-border bg-paper p-sm font-mono text-body-sm text-slate">
             {diff.before.map((line) => (
               <div key={line} className="whitespace-pre">
-                <span aria-hidden="true" className="me-sm text-danger">-</span>
+                <span aria-hidden="true" className="me-sm text-danger">
+                  -
+                </span>
                 {line}
               </div>
             ))}
@@ -48,7 +50,9 @@ export function DiffPreviewCard({
           <pre className="mt-xs overflow-auto rounded-sm border border-border bg-paper p-sm font-mono text-body-sm text-ink">
             {diff.after.map((line) => (
               <div key={line} className="whitespace-pre">
-                <span aria-hidden="true" className="me-sm text-success">+</span>
+                <span aria-hidden="true" className="me-sm text-success">
+                  +
+                </span>
                 {line}
               </div>
             ))}
@@ -73,7 +77,13 @@ export function DiffPreviewCard({
         <div className="mt-md" data-testid={testIds.agent.diffStatus}>
           <StatusPill
             tone={diff.status === "accepted" ? "success" : "danger"}
-            icon={diff.status === "accepted" ? <Check className="size-3.5" /> : <X className="size-3.5" />}
+            icon={
+              diff.status === "accepted" ? (
+                <Check className="size-3.5" />
+              ) : (
+                <X className="size-3.5" />
+              )
+            }
           >
             {t(`agent.diff.status.${diff.status}`)}
           </StatusPill>

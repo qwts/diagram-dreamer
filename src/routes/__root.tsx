@@ -1,6 +1,7 @@
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
+import { DocumentLanguage } from "../components/common/DocumentLanguage";
 import { ThemeProvider } from "../components/common/ThemeProvider";
 import { VellumButton } from "../components/common/VellumButton";
 
@@ -31,6 +32,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <ThemeProvider>
+      <DocumentLanguage />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </ThemeProvider>
