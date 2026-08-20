@@ -57,10 +57,20 @@ jobs:
           fi
       # The app must run fully offline. Fonts and i18n are bundled; nothing may
       # be fetched at runtime.
+      #
+      # Two kinds of match are not evidence of a fetch, and are filtered out:
+      #   - documentation and XML-namespace URLs baked into vendor error
+      #     messages and SVG attributes
+      #   - loopback, which is by definition not an external origin. TanStack
+      #     Router carries `http://localhost` as the fallback it assigns to
+      #     `router.origin` when `window.origin` is null — a placeholder for
+      #     URL parsing, never a request target, and unreachable for us anyway
+      #     since the renderer runs on memory history.
       - name: No external origins in the bundle
         run: |
           if grep -rInoE 'https?://[a-zA-Z0-9.-]+' dist/assets \
              | grep -vE 'react\.dev|react\.i18next\.com|tailwindcss\.com|www\.w3\.org|json-schema\.org' \
+             | grep -vE '//(localhost|127\.0\.0\.1)' \
              | grep . ; then
             echo "::error::built bundle references an external origin"
             exit 1
