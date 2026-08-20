@@ -175,7 +175,7 @@ export function AgentPanel({
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder={t("agent.prompt.placeholder")}
                 data-testid={testIds.agent.promptInput}
-                className="min-h-10 flex-1 resize-none rounded-sm border border-border bg-paper p-sm text-body-sm text-ink placeholder:text-slate"
+                className="min-h-10 flex-1 resize-none rounded-sm border border-border-strong bg-paper p-sm text-body-sm text-ink placeholder:text-slate"
               />
               <VellumButton
                 type="submit"

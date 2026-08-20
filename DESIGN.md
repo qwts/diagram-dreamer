@@ -13,6 +13,7 @@ colors:
   surface-raised: "#FFFFFF"
   muted: "#F2F1ED"
   border: "#E3E1DC"
+  border-strong: "#8D887C"
   danger: "#B3261E"
   danger-surface: "#FBEAE9"
   warning: "#8A5A00"
@@ -29,6 +30,7 @@ colors:
   tertiary-surface-dark: "#17302F"
   on-tertiary-dark: "#0B1416"
   border-dark: "#2A2E33"
+  border-strong-dark: "#6A717D"
   danger-dark: "#F2B8B5"
   danger-surface-dark: "#38211F"
   warning-dark: "#E0A949"
@@ -113,7 +115,7 @@ components:
 
 ## Overview
 
-Drafting-table minimalism. Vellum treats the app chrome as warm, matte paper — quiet enough that rendered diagrams, which bring their own color, are always the loudest thing on screen. Ink for text, slate for structure, and a single teal accent ("Lagoon") that means exactly one thing: *you can interact with this*. The feel is a precision drawing instrument, not a dashboard.
+Drafting-table minimalism. Vellum treats the app chrome as warm, matte paper — quiet enough that rendered diagrams, which bring their own color, are always the loudest thing on screen. Ink for text, slate for structure, and a single teal accent ("Lagoon") that means exactly one thing: _you can interact with this_. The feel is a precision drawing instrument, not a dashboard.
 
 Dark mode is a first-class surface, not an inversion: the same semantic roles map to the `*-dark` tokens (graphite paper, bone ink, brightened Lagoon for contrast on dark).
 
@@ -124,7 +126,8 @@ Dark mode is a first-class surface, not an inversion: the same semantic roles ma
 - **Tertiary (#0E7C7B):** Lagoon. The sole interactive accent — buttons, links, active states, focus rings, agent-activity indicators. If it isn't interactive or live, it isn't Lagoon.
 - **Neutral (#FAFAF8):** Warm paper. App background and editor surface; softer than pure white so exported white-background diagrams still read as distinct objects.
 - **Surface-raised (#FFFFFF):** Panels, cards, dialogs — one step above paper, separated by `border`, not shadow-first.
-- **Muted (#F2F1ED):** Recessed paper. The one step *below* surface-raised: inert pill backgrounds, secondary-button hover, disabled or disconnected chrome. Never carries meaning on its own — it is the absence of state, which is why it is not one of the status colors.
+- **Border vs Border-strong:** `border` (#E3E1DC) is a _divider_ — it separates surfaces and sits at roughly 1.25:1, which is deliberate and correct for something purely decorative. `border-strong` (#8D887C) is for a boundary that **identifies a control**: the secondary button, which DESIGN.md defines as paper-on-paper with a border, and form inputs. Those clear 3:1 because WCAG 1.4.11 governs them. If a border is the only thing telling the user something is interactive, it is `border-strong`; otherwise it is `border`.
+- **Muted (#F2F1ED):** Recessed paper. The one step _below_ surface-raised: inert pill backgrounds, secondary-button hover, disabled or disconnected chrome. Never carries meaning on its own — it is the absence of state, which is why it is not one of the status colors.
 - **Danger / Warning / Success:** Diagnostics only (parse errors, lint findings, agent permission prompts). Never decorative. Every status color is always paired with an icon or text label — color is never the sole signal.
 - **The `*-surface` tints:** each semantic color that can back a filled region has an explicit surface token — `tertiary-surface`, `danger-surface`, `warning-surface`, `success-surface`. Use them; never approximate one with an alpha of the base color. A 10% Lagoon tint reads as the same idea but only reaches 4.4:1 against Lagoon text, which fails AA — the tokens are tuned to clear 4.5:1 in both themes.
 - **Dark set:** every role above has a `*-dark` counterpart, not just the neutrals — the diagnostic colors and their surfaces are re-picked for dark rather than reused, because a tint that works on paper turns muddy on graphite. `tertiary-dark` is brightened to hold ≥4.5:1 on dark surfaces.
@@ -151,7 +154,7 @@ Border-first, shadow-second. Raised surfaces are distinguished by `border` and b
 
 ## Components
 
-- **button-primary:** One per view maximum. Lagoon fill, white text.
+- **button-primary:** Lagoon fill, white text. **One per surface maximum** — a surface being a toolbar, a panel, a card, or a dialog, not the whole screen. The workspace legitimately shows several at once (the prompt's send button, a permission card's _Allow once_, a diff card's _Accept edit_, a dialog's _Save changes_) because each is the single dominant action of its own surface, and they are never in visual competition. Two primaries inside one card or one toolbar is the thing this rule forbids.
 - **button-secondary:** Paper-on-paper with a border; the default button.
 - **editor:** Paper surface, mono type, error underlines in `danger` with gutter badges (icon + line number, not color alone).
 - **error-card:** Inline per-block diagnostic in the preview — a failed diagram renders this card in place; sibling diagrams are unaffected.
