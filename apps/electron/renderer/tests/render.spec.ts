@@ -101,11 +101,11 @@ test("a parse error reports the document line, not the block line", async ({ pag
   const card = page.getByTestId("preview.diagram-frame.error-card");
   await expect(card).toBeVisible({ timeout: 30_000 });
 
-  // The broken fixture mangles document line 16, inside a block whose opening
-  // fence is line 14. Mermaid counts from the block it was handed, the reader
+  // The broken fixture mangles document line 21, inside a block whose opening
+  // fence is line 18. Mermaid counts from the block it was handed, the reader
   // counts from the file, and a gutter reference is worthless if those two
   // disagree — it sends the reader to the wrong place with total confidence.
-  await expect(card.getByTestId("preview.diagram-frame.error-line-ref")).toHaveText("Line 16");
+  await expect(card.getByTestId("preview.diagram-frame.error-line-ref")).toHaveText("Line 21");
 });
 
 test("re-rendering reuses the sandbox instead of rebuilding it", async ({ page }) => {
