@@ -31,6 +31,18 @@ const source = [
   "```",
 ];
 
+/**
+ * A block's Mermaid source, sliced out of the document rather than restated.
+ *
+ * `startLine`/`endLine` are the fence lines themselves and are 1-based, so the
+ * body is everything between them. Deriving it means the editor pane and the
+ * rendered diagram cannot disagree — a fixture whose preview text said one
+ * thing while its diagram drew another would make every render test a lie.
+ */
+function blockSource(startLine: number, endLine: number, lines: string[] = source): string {
+  return lines.slice(startLine, endLine - 1).join("\n");
+}
+
 export const emptyDocument: DocumentModel = {
   id: "doc-empty",
   fileName: "untitled.md",
@@ -41,7 +53,10 @@ export const emptyDocument: DocumentModel = {
   blocks: [],
   diagnostics: [],
   cursor: { line: 1, column: 1 },
-  mermaidVersion: "11.4.1",
+  // Matches the Mermaid actually bundled with the sandbox. Once a real
+  // document model exists this comes from the sandbox handshake, which
+  // reports its own version, rather than from a fixture literal.
+  mermaidVersion: "11.17.0",
 };
 
 export const multiBlockDocument: DocumentModel = {
@@ -52,13 +67,37 @@ export const multiBlockDocument: DocumentModel = {
   lineCount: source.length,
   sourcePreview: source,
   blocks: [
-    { id: "block-1", diagramType: "flowchart", startLine: 5, endLine: 10, state: "ready" },
-    { id: "block-2", diagramType: "sequenceDiagram", startLine: 14, endLine: 19, state: "ready" },
-    { id: "block-3", diagramType: "stateDiagram-v2", startLine: 23, endLine: 28, state: "ready" },
+    {
+      id: "block-1",
+      diagramType: "flowchart",
+      startLine: 5,
+      endLine: 10,
+      state: "ready",
+      source: blockSource(5, 10),
+    },
+    {
+      id: "block-2",
+      diagramType: "sequenceDiagram",
+      startLine: 14,
+      endLine: 19,
+      state: "ready",
+      source: blockSource(14, 19),
+    },
+    {
+      id: "block-3",
+      diagramType: "stateDiagram-v2",
+      startLine: 23,
+      endLine: 28,
+      state: "ready",
+      source: blockSource(23, 28),
+    },
   ],
   diagnostics: [],
   cursor: { line: 6, column: 12 },
-  mermaidVersion: "11.4.1",
+  // Matches the Mermaid actually bundled with the sandbox. Once a real
+  // document model exists this comes from the sandbox handshake, which
+  // reports its own version, rather than from a fixture literal.
+  mermaidVersion: "11.17.0",
 };
 
 export const failedBlockDocument: DocumentModel = {
@@ -329,11 +368,38 @@ export const templates: DocumentTemplate[] = [
   },
 ];
 
+/**
+ * Syntactically invalid Mermaid in an otherwise healthy document.
+ *
+ * The point is the *disagreement*: every block is `state: "ready"` and the
+ * model carries no diagnostic, because nothing has tried to render yet. Only
+ * Mermaid knows block-2 is broken, and it only finds out at render time. That
+ * is the branch SPEC §6 describes — "the renderer never white-screens on a bad
+ * block" — and no fixture reached it before, because `failed` hands the shell a
+ * diagnostic that was decided for it.
+ */
+const brokenSource = source.map((line, index) =>
+  index === 15 ? "  Renderer ->< Main: not an arrow" : line,
+);
+
+export const brokenDocument: DocumentModel = {
+  ...multiBlockDocument,
+  id: "doc-broken",
+  fileName: "broken.md",
+  sourcePreview: brokenSource,
+  blocks: [
+    multiBlockDocument.blocks[0]!,
+    { ...multiBlockDocument.blocks[1]!, source: blockSource(14, 19, brokenSource) },
+    multiBlockDocument.blocks[2]!,
+  ],
+};
+
 export const documentFixtures = {
   empty: emptyDocument,
   multi: multiBlockDocument,
   failed: failedBlockDocument,
   warned: warnedDocument,
+  broken: brokenDocument,
 } as const;
 
 export const agentFixtures = {

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      This document is the sandbox from SPEC §6/§12: Mermaid runs here and
+      nowhere else. Its own policy, not the app's — an iframe loaded from a real
+      URL does not inherit the embedder's CSP, so it has to say all of this
+      itself.
+
+      `default-src 'none'` is the load-bearing line. The frame already runs at an
+      opaque origin (`sandbox="allow-scripts"`, no `allow-same-origin`), so it
+      cannot read the app; this is what stops it *writing* anywhere — no fetch,
+      no image beacon, no font request. A Mermaid XSS in here has nothing to
+      talk to.
+
+      `script-src` is filled in at build time with the hash of the one inlined
+      script, by the `vellum-sandbox` plugin in vite.config.ts. Hashes work at an
+      opaque origin, where `'self'` matches nothing at all.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src __SANDBOX_SCRIPT_HASH__; style-src 'unsafe-inline'; img-src data:; font-src data:"
+    />
+    <title>Diagram sandbox</title>
+    <style>
+      /* Transparent: the frame takes its background from the app's surface, so
+         a diagram does not sit on a differently-lit rectangle in dark mode. */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+      }
+      #surface {
+        display: inline-block;
+      }
+      #surface svg {
+        display: block;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #surface * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="surface"></div>
+    <script type="module" src="/src/sandbox-entry.ts"></script>
+  </body>
+</html>

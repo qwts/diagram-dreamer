@@ -90,6 +90,7 @@
     },
     "error": {
       "title": "This diagram could not be rendered",
+      "mermaid": "Mermaid could not render this block: {message}",
       "line": "Line {line}"
     },
     "warning": {

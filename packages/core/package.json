@@ -8,6 +8,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./sandbox": {
+      "types": "./src/render/sandbox.ts",
+      "default": "./src/render/sandbox.ts"
     }
   },
   "scripts": {
@@ -15,5 +19,8 @@
   },
   "devDependencies": {
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "mermaid": "^11.17.0"
   }
 }

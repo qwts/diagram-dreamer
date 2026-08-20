@@ -1,10 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider, createMemoryHistory } from "@tanstack/react-router";
+import { DiagramRenderer } from "@vellum/core";
 
 import "./styles.css";
 import "./i18n";
 import { getRouter } from "./router";
+import { DiagramRendererContext } from "./components/preview/renderer-context";
 
 /**
  * The renderer loads from file:// inside Electron, where path and hash history
@@ -31,11 +33,26 @@ function initialEntryFromLocation(): string {
 const initialEntry = initialEntryFromLocation();
 const router = getRouter({ history: createMemoryHistory({ initialEntries: [initialEntry] }) });
 
+/**
+ * The composition root, and the only place a `DiagramRenderer` is constructed.
+ * The shell receives it through context and could equally receive `null` — the
+ * host owns this decision, not the presentation layer (CLAUDE.md invariant 1).
+ *
+ * Resolved against `document.baseURI` rather than written as a bare path: the
+ * built app uses a relative base so it can load from `file://` in Electron, and
+ * an absolute `/sandbox.html` would point at the filesystem root there.
+ */
+const diagramRenderer = new DiagramRenderer({
+  sandboxUrl: new URL("sandbox.html", document.baseURI).href,
+});
+
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element #root is missing from index.html");
 
 createRoot(rootElement).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <DiagramRendererContext value={diagramRenderer}>
+      <RouterProvider router={router} />
+    </DiagramRendererContext>
   </StrictMode>,
 );
