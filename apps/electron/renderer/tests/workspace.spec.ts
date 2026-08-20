@@ -140,3 +140,25 @@ test("diagrams pan by keyboard, and fit restores both axes", async ({ page }) =>
   await page.getByTestId("preview.diagram-frame.zoom-fit").first().click();
   expect(await translate()).toBe(NEUTRAL);
 });
+
+test("the save control tracks save state", async ({ page }) => {
+  // SPEC §8 lists save among the MVP file operations. SaveStateBadge reports
+  // the state; this is the affordance that acts on it.
+  const save = () => page.getByTestId("workspace.toolbar.save");
+
+  // `multi` is unsaved — actionable, and named plainly.
+  await page.goto("/?state=multi-idle");
+  await expect(save()).toBeEnabled();
+  await expect(save()).toHaveAccessibleName("Save document");
+
+  // `empty` is saved — still present, but nothing to do, and it says so rather
+  // than leaving an unexplained dead control.
+  await page.goto("/?state=empty-idle");
+  await expect(save()).toBeDisabled();
+  await expect(save()).toHaveAccessibleName("No unsaved changes");
+
+  // `failed` carries saveState "error" — the retry path, not a dead end.
+  await page.goto("/?state=failed-idle");
+  await expect(save()).toBeEnabled();
+  await expect(save()).toHaveAccessibleName("Retry saving document");
+});

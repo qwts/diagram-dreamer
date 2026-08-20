@@ -11,6 +11,7 @@ export const testIds = {
     toolbar: "workspace.toolbar.root",
     fileName: "workspace.toolbar.file-name",
     saveState: "workspace.toolbar.save-state",
+    save: "workspace.toolbar.save",
     exportMenu: "workspace.toolbar.export-menu",
     exportSvg: "workspace.toolbar.export-svg",
     exportPng: "workspace.toolbar.export-png",

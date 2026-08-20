@@ -19,7 +19,10 @@
       "themeLight": "Switch to dark theme",
       "themeDark": "Switch to light theme",
       "settings": "Open settings",
-      "agentPanel": "Toggle agent panel"
+      "agentPanel": "Toggle agent panel",
+      "save": "Save document",
+      "saveNothing": "No unsaved changes",
+      "saveRetry": "Retry saving document"
     },
     "save": {
       "saved": "Saved",
