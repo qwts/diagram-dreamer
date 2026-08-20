@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "vellum-dev",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "dev", "--port", "5173", "--strictPort"],
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd apps/electron/renderer && npx vite dev --port 5173 --strictPort"],
       "port": 5173
     }
   ]
