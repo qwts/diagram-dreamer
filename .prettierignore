@@ -1,7 +1,11 @@
 node_modules
 dist
+dist-pseudo
 .output
 .vinxi
+.lovable
+test-results
+playwright-report
 pnpm-lock.yaml
 package-lock.json
 bun.lock

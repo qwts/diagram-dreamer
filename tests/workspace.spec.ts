@@ -1,0 +1,102 @@
+import { test, expect, type ConsoleMessage, type Page } from "@playwright/test";
+
+import { fixtureStates, ALWAYS_PRESENT } from "./fixtures";
+
+/**
+ * Per CLAUDE.md Phase 2: for each `?state=` fixture — renders, no console
+ * errors, key testids present.
+ */
+
+function collectPageErrors(page: Page) {
+  const errors: string[] = [];
+  page.on("console", (message: ConsoleMessage) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(String(error)));
+  return errors;
+}
+
+for (const state of fixtureStates) {
+  test(`${state.name} renders cleanly`, async ({ page }) => {
+    const errors = collectPageErrors(page);
+
+    await page.goto(`/?state=${state.name}`);
+    await expect(page.getByTestId("workspace.layout.root")).toBeVisible();
+
+    for (const id of ALWAYS_PRESENT) {
+      await expect(page.getByTestId(id), `missing testid ${id}`).toBeAttached();
+    }
+
+    // No untranslated keys anywhere on the page. Raw i18next keys look like
+    // "workspace.save.unsaved" — this is the exact defect that started the
+    // hardening pass, so it is asserted on every state.
+    const body = (await page.locator("body").innerText()).trim();
+    expect(body, "page rendered empty").not.toBe("");
+    expect(body, "raw i18n key leaked into the UI").not.toMatch(
+      /\b(workspace|agent|agentChip|preview|editor|settings|welcome|fixtures|error)\.[a-z][A-Za-z]*\.[a-zA-Z.]+/,
+    );
+
+    expect(errors, `console errors on ${state.name}`).toEqual([]);
+  });
+}
+
+test("agent panel is a complementary landmark and the editor/preview are labelled regions", async ({
+  page,
+}) => {
+  await page.goto("/?state=multi-streaming");
+  await expect(page.locator("main")).toHaveCount(1);
+  await expect(page.locator("aside")).toHaveCount(1);
+  await expect(page.locator('[role="toolbar"]').first()).toBeAttached();
+  await expect(page.locator('[role="status"]')).toHaveCount(1);
+});
+
+test("F6 cycles focus across the major regions", async ({ page }) => {
+  await page.goto("/?state=multi-streaming");
+  // Start from a control in the header, which is outside all four cycled
+  // regions — clicking the page body would land inside whichever pane happens
+  // to sit under the cursor and change where the cycle begins.
+  await page.getByTestId("workspace.toolbar.theme-toggle").focus();
+
+  const regionIds = [
+    "editor.host.scroll-container",
+    "preview.pane.root",
+    "agent.panel.root",
+    "workspace.status-bar.root",
+  ];
+
+  for (const expected of regionIds) {
+    await page.keyboard.press("F6");
+    const focused = await page.evaluate(
+      () => window.document.activeElement?.getAttribute("data-testid") ?? null,
+    );
+    expect(focused, `F6 should have landed on ${expected}`).toBe(expected);
+  }
+});
+
+test("diagnostics count uses warning tones when nothing is an error", async ({ page }) => {
+  // The `warned` fixture exists specifically to cover this branch: warnings must
+  // never borrow danger tokens (CLAUDE.md invariant 3).
+  await page.goto("/?state=warned-idle");
+  const count = page.getByTestId("workspace.status-bar.diagnostics-count");
+  await expect(count).toBeVisible();
+  await expect(count).toHaveClass(/text-warning/);
+  await expect(count).not.toHaveClass(/text-danger/);
+
+  await page.goto("/?state=failed-idle");
+  await expect(page.getByTestId("workspace.status-bar.diagnostics-count")).toHaveClass(
+    /text-danger/,
+  );
+});
+
+test("the permission card does not steal focus when it appears", async ({ page }) => {
+  await page.goto("/?state=multi-permission");
+  await expect(page.getByTestId("agent.permission.root")).toBeVisible();
+
+  const focusedTestId = await page.evaluate(
+    () => window.document.activeElement?.getAttribute("data-testid") ?? null,
+  );
+  expect(focusedTestId).not.toBe("agent.permission.root");
+
+  // ...but it is announced in the polite live region.
+  await expect(page.getByTestId("agent.transcript.announcement")).toContainText(/permission/i);
+});

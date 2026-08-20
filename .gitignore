@@ -33,3 +33,8 @@ dist-ssr
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Build outputs
+dist-pseudo
+test-results
+playwright-report

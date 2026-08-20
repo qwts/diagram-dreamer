@@ -106,6 +106,41 @@ export const failedBlockDocument: DocumentModel = {
   ],
 };
 
+/**
+ * Warnings but no errors. Exercises the branch where diagnostics exist yet
+ * nothing is severity "error" — the status bar must use warning tokens, never
+ * danger ones (invariant 3). Added after a PR review found that branch
+ * uncovered: `failed` carries one error and one warning, so it could not
+ * distinguish the two.
+ */
+export const warnedDocument: DocumentModel = {
+  ...multiBlockDocument,
+  id: "doc-warned",
+  saveState: "saved",
+  blocks: [
+    multiBlockDocument.blocks[0]!,
+    multiBlockDocument.blocks[1]!,
+    {
+      ...multiBlockDocument.blocks[2]!,
+      state: "error",
+      diagnostic: {
+        id: "diag-w1",
+        severity: "warning",
+        messageKey: "preview.diagnostic.lintLongLabel",
+        line: 7,
+      },
+    },
+  ],
+  diagnostics: [
+    {
+      id: "diag-w1",
+      severity: "warning",
+      messageKey: "preview.diagnostic.lintLongLabel",
+      line: 7,
+    },
+  ],
+};
+
 const baseItems: AgentSession["items"] = [
   { kind: "text", id: "item-1", bodyKey: "agent.message.greeting" },
 ];
@@ -203,6 +238,37 @@ export const agentDiffPending: AgentSession = {
   },
 };
 
+/**
+ * The settled counterparts. Both cards outlive the decision they were asking
+ * for — `PermissionRequest.resolution` and `DiffPreview.status` turn them into
+ * records of what happened — but until these existed nothing rendered that
+ * branch, so the resolved layout went unasserted and its Lagoon violation went
+ * unseen. A state a type permits needs a fixture.
+ */
+export const agentPermissionResolved: AgentSession = {
+  ...agentPermissionPending,
+  state: "idle",
+  items: [
+    ...agentPermissionPending.items.slice(0, 4),
+    {
+      kind: "toolCall",
+      id: "item-5",
+      toolName: "fs/write",
+      target: "docs/architecture.md#block-1",
+      status: "success",
+    },
+  ],
+  permission: {
+    ...agentPermissionPending.permission!,
+    resolution: "allowOnce",
+  },
+};
+
+export const agentDiffSettled: AgentSession = {
+  ...agentDiffPending,
+  diff: { ...agentDiffPending.diff!, status: "accepted" },
+};
+
 export const recentFiles: RecentFile[] = [
   {
     id: "r1",
@@ -267,6 +333,7 @@ export const documentFixtures = {
   empty: emptyDocument,
   multi: multiBlockDocument,
   failed: failedBlockDocument,
+  warned: warnedDocument,
 } as const;
 
 export const agentFixtures = {
@@ -274,26 +341,31 @@ export const agentFixtures = {
   idle: agentIdle,
   streaming: agentStreaming,
   permission: agentPermissionPending,
+  permissionResolved: agentPermissionResolved,
   diff: agentDiffPending,
+  diffSettled: agentDiffSettled,
 } as const;
 
 export type DocumentFixtureKey = keyof typeof documentFixtures;
 export type AgentFixtureKey = keyof typeof agentFixtures;
 
 /**
+ * Derived, never hand-written. Anything that enumerates fixtures — the dev
+ * switcher, search-param validation, the test gates — reads these, so adding a
+ * fixture cannot leave a stale list behind.
+ */
+export const documentFixtureKeys = Object.keys(documentFixtures) as DocumentFixtureKey[];
+export const agentFixtureKeys = Object.keys(agentFixtures) as AgentFixtureKey[];
+
+/**
  * Flat enumeration of every addressable fixture combination, so the test gates
  * can iterate one list rather than a cross product. Each name is the `?state=`
  * value for that combination. Never remove an entry — see CLAUDE.md invariant 6.
  */
-export const fixtureStates: { name: string; doc: DocumentFixtureKey; agent: AgentFixtureKey }[] = (
-  Object.keys(documentFixtures) as DocumentFixtureKey[]
-).flatMap((doc) =>
-  (Object.keys(agentFixtures) as AgentFixtureKey[]).map((agent) => ({
-    name: `${doc}-${agent}`,
-    doc,
-    agent,
-  })),
-);
+export const fixtureStates: { name: string; doc: DocumentFixtureKey; agent: AgentFixtureKey }[] =
+  documentFixtureKeys.flatMap((doc) =>
+    agentFixtureKeys.map((agent) => ({ name: `${doc}-${agent}`, doc, agent })),
+  );
 
 /** Resolve a `?state=` value to its two axes. Returns undefined for anything unknown. */
 export function parseFixtureState(

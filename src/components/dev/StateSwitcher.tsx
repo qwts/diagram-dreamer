@@ -3,10 +3,12 @@ import { useTranslation } from "react-i18next";
 import { FlaskConical } from "lucide-react";
 import { VellumButton } from "@/components/common/VellumButton";
 import { testIds } from "@/testids";
-import type { AgentFixtureKey, DocumentFixtureKey } from "@/fixtures";
-
-const DOC_KEYS: DocumentFixtureKey[] = ["empty", "multi", "failed"];
-const AGENT_KEYS: AgentFixtureKey[] = ["disconnected", "idle", "streaming", "permission", "diff"];
+import {
+  agentFixtureKeys as AGENT_KEYS,
+  documentFixtureKeys as DOC_KEYS,
+  type AgentFixtureKey,
+  type DocumentFixtureKey,
+} from "@/fixtures";
 
 interface StateSwitcherProps {
   documentKey: DocumentFixtureKey;

@@ -14,7 +14,11 @@ const CSP = [
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
-  "font-src 'self'",
+  // data: is required, not lax: Vite inlines font files under the 4 KiB asset
+  // limit as data: URIs, so `font-src 'self'` alone blocks them and the app
+  // silently falls back to system fonts in the packaged build. Caught by the
+  // Playwright console-error gate. Still no remote origin is permitted.
+  "font-src 'self' data:",
   "connect-src 'self'",
   "frame-src 'self' blob:",
   "object-src 'none'",

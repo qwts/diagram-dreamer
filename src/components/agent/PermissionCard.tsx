@@ -4,6 +4,7 @@ import { ShieldQuestion, ShieldCheck, ShieldX } from "lucide-react";
 import { VellumButton } from "@/components/common/VellumButton";
 import { StatusPill } from "@/components/common/StatusPill";
 import { testIds } from "@/testids";
+import { cn } from "@/lib/utils";
 import type { PermissionRequest, PermissionResolution } from "@/types/shell";
 
 interface PermissionCardProps {
@@ -46,6 +47,12 @@ export function PermissionCard({ request, onResolve, onDismissFocus }: Permissio
     items[next]?.focus();
   };
 
+  // Lagoon — on the border and the shield alike — only while the request is
+  // still awaiting a decision. Once resolved the card is a settled record of
+  // what was allowed or denied, and DESIGN.md reserves Lagoon for what is
+  // interactive or live. The StatusPill below carries the outcome.
+  const live = !resolved;
+
   return (
     <div
       ref={ref}
@@ -54,10 +61,16 @@ export function PermissionCard({ request, onResolve, onDismissFocus }: Permissio
       aria-label={t("agent.permission.title")}
       data-testid={testIds.agent.permission}
       onKeyDown={onKeyDown}
-      className="rounded-md border border-lagoon/40 bg-surface-raised p-md shadow-sm"
+      className={cn(
+        "rounded-md border bg-surface-raised p-md shadow-sm",
+        live ? "border-lagoon/40" : "border-border",
+      )}
     >
       <div className="flex items-start gap-sm">
-        <ShieldQuestion className="mt-2xs size-4 shrink-0 text-lagoon" aria-hidden="true" />
+        <ShieldQuestion
+          className={cn("mt-2xs size-4 shrink-0", live ? "text-lagoon" : "text-slate")}
+          aria-hidden="true"
+        />
         <div className="min-w-0 flex-1">
           <p className="text-body-md font-medium text-ink">{t("agent.permission.title")}</p>
           <p

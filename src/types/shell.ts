@@ -44,7 +44,26 @@ export interface DocumentModel {
   blocks: DiagramBlock[];
   diagnostics: Diagnostic[];
   cursor: { line: number; column: number };
+  /**
+   * Frontmatter — per-document config (SPEC §5). All three are declared by the
+   * document, parsed by `packages/core`, and only ever displayed here.
+   *
+   * `theme` is the document's *diagram* theme (mermaid's `default` / `dark` /
+   * `forest` / `neutral` / `base`, or a site theme), which is **not**
+   * `ThemePreference`: that is the application chrome's light/dark/system
+   * setting and belongs to the user, not the file. Kept as a string for the
+   * same reason `mermaidVersion` is — the set of valid values is mermaid's to
+   * define, and the shell must not encode it.
+   *
+   * `direction` is the document's own RTL hint. Per Q4 the shell does not act
+   * on it: `<html lang>`/`<html dir>` follow the UI language via
+   * `DocumentLanguage`, because in Electron the renderer owns that. This field
+   * exists so a document that declares its own direction has somewhere to say
+   * so once `packages/core` can honour it per-preview.
+   */
+  theme?: string | undefined;
   mermaidVersion: string;
+  direction?: "ltr" | "rtl" | undefined;
 }
 
 export type AgentConnectionState = "disconnected" | "idle" | "streaming" | "awaiting-permission";

@@ -36,6 +36,7 @@ export const LIGHT = {
   "surface-raised": "#ffffff",
   muted: "#f2f1ed",
   border: "#e3e1dc",
+  "border-strong": "#8d887c",
   danger: "#b3261e",
   "danger-surface": "#fbeae9",
   warning: "#8a5a00",
@@ -55,6 +56,7 @@ export const DARK = {
   "surface-raised": "#1d2024",
   muted: "#23272c",
   border: "#2a2e33",
+  "border-strong": "#6a717d",
   danger: "#f2b8b5",
   "danger-surface": "#38211f",
   warning: "#e0a949",
@@ -81,7 +83,11 @@ export const PAIRS = [
   ["warning on raised surface", "warning", "surface-raised", 4.5],
   ["success on success surface", "success", "success-surface", 4.5],
   ["success on raised surface", "success", "surface-raised", 4.5],
-  // Focus ring is a non-text UI indicator: WCAG 1.4.11 threshold.
+  // Non-text UI indicators: WCAG 1.4.11 threshold. The soft `border` is a
+  // decorative divider and is deliberately not checked; `border-strong` is the
+  // one that identifies a control (secondary button, inputs) and must clear 3:1.
   ["focus ring vs paper", "tertiary", "background", 3],
   ["focus ring vs raised surface", "tertiary", "surface-raised", 3],
+  ["control border vs paper", "border-strong", "background", 3],
+  ["control border vs raised surface", "border-strong", "surface-raised", 3],
 ];

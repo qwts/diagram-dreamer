@@ -80,6 +80,10 @@ export function EditorHost({ document, onFormat, onToggleWrap }: EditorHostProps
               >
                 {diagnostic ? (
                   <span
+                    // role="img" so the label is permitted: a bare <span> maps
+                    // to role generic, which prohibits aria-label (axe
+                    // aria-prohibited-attr).
+                    role="img"
                     data-testid={testIds.editor.errorBadge}
                     title={t(
                       diagnostic.severity === "error"

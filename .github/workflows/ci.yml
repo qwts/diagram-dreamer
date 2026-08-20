@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: types, lint, tokens
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Type-check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Formatting
+        run: npm run format:check
+      - name: Token contrast (WCAG 2.1 AA, both themes)
+        run: npm run check:contrast
+      # SPEC §9: design.md lint catches broken token references. It exits
+      # non-zero only on errors; the orphaned-token warnings are expected while
+      # DESIGN.md's `components:` block covers a subset of the system.
+      - name: design.md lint
+        run: npx --yes @google/design.md lint DESIGN.md
+
+  build:
+    name: build is a static SPA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # The renderer ships inside Electron with no server. If a server or worker
+      # entry ever reappears in the output, that invariant has been broken.
+      - name: No server or worker bundle
+        run: |
+          if find dist -name '_worker*' -o -name 'server*' -o -name 'nitro*' | grep -q .; then
+            echo "::error::build emitted a server/worker bundle; the renderer must be a static SPA"
+            find dist -name '_worker*' -o -name 'server*' -o -name 'nitro*'
+            exit 1
+          fi
+      # The app must run fully offline. Fonts and i18n are bundled; nothing may
+      # be fetched at runtime.
+      #
+      # Two kinds of match are not evidence of a fetch, and are filtered out:
+      #   - documentation and XML-namespace URLs baked into vendor error
+      #     messages and SVG attributes
+      #   - loopback, which is by definition not an external origin. TanStack
+      #     Router carries `http://localhost` as the fallback it assigns to
+      #     `router.origin` when `window.origin` is null — a placeholder for
+      #     URL parsing, never a request target, and unreachable for us anyway
+      #     since the renderer runs on memory history.
+      - name: No external origins in the bundle
+        run: |
+          if grep -rInoE 'https?://[a-zA-Z0-9.-]+' dist/assets \
+             | grep -vE 'react\.dev|react\.i18next\.com|tailwindcss\.com|www\.w3\.org|json-schema\.org' \
+             | grep -vE '//(localhost|127\.0\.0\.1)' \
+             | grep . ; then
+            echo "::error::built bundle references an external origin"
+            exit 1
+          fi
+
+  e2e:
+    name: render, axe, RTL, pseudo-localization
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Playwright gates
+        run: npm test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -11,7 +11,10 @@ export interface VellumButtonProps extends ButtonHTMLAttributes<HTMLButtonElemen
 
 const variants: Record<Variant, string> = {
   primary: "bg-lagoon text-on-lagoon hover:bg-lagoon-hover border border-transparent",
-  secondary: "bg-surface-raised text-ink border border-border hover:bg-muted",
+  // DESIGN.md defines this as "paper-on-paper with a border", so the border is
+  // the only thing identifying it as a control — it takes border-strong (3:1)
+  // rather than the soft divider border (WCAG 1.4.11).
+  secondary: "bg-surface-raised text-ink border border-border-strong hover:bg-muted",
   ghost: "bg-transparent text-slate border border-transparent hover:bg-muted hover:text-ink",
   danger: "bg-danger-surface text-danger border border-danger/30 hover:bg-danger-surface",
 };

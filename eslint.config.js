@@ -6,7 +6,21 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  {
+    // Build output and generated files. Without these, `eslint .` walks the
+    // minified bundles in dist/ and dist-pseudo/ and reports prettier
+    // violations against generated code.
+    ignores: [
+      "dist",
+      "dist-pseudo",
+      ".output",
+      ".vinxi",
+      ".lovable",
+      "test-results",
+      "playwright-report",
+      "src/routeTree.gen.ts",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -20,14 +34,22 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // CLAUDE.md invariant 2: this ships in Electron; there is no server.
+      // These are the imports through which SSR would come back.
       "no-restricted-imports": [
         "error",
         {
           paths: [
             {
               name: "server-only",
+              message: "The renderer is a static SPA — there is no server module graph to split.",
+            },
+          ],
+          patterns: [
+            {
+              group: ["@tanstack/react-start", "@tanstack/react-start/*", "@tanstack/start*"],
               message:
-                "TanStack Start does not use the Next.js `server-only` package. Rename the module to `*.server.ts` or mark it with `@tanstack/react-start/server-only`.",
+                "TanStack Start was removed in M1 (CLAUDE.md invariant 2). The renderer is a plain Vite SPA with a memory-history router.",
             },
           ],
         },
