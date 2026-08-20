@@ -1,14 +1,17 @@
 {
-  "app": { "name": "Vellum", "tagline": "Mermaid document renderer" },
+  "error": {
+    "title": "This document did not load",
+    "body": "Something went wrong while rendering the workspace.",
+    "retry": "Try again"
+  },
   "workspace": {
-    "region": { "main": "Document workspace", "editor": "Document source", "preview": "Diagram preview", "agent": "Agent session", "status": "Workspace status" },
+    "region": { "main": "Document workspace", "editor": "Document source", "preview": "Diagram preview" },
     "toolbar": {
       "label": "Document actions",
       "export": "Export",
       "exportSvg": "Export all as SVG",
       "exportPng": "Export all as PNG",
       "exportMarkdown": "Export markdown",
-      "theme": "Toggle theme",
       "themeLight": "Switch to dark theme",
       "themeDark": "Switch to light theme",
       "settings": "Open settings",
@@ -17,17 +20,15 @@
     "save": { "saved": "Saved", "unsaved": "Unsaved changes", "saving": "Saving", "error": "Save failed" },
     "status": {
       "label": "Workspace status",
-      "cursor": "Line {{line}}, column {{column}}",
-      "mermaid": "Mermaid {{version}}",
-      "diagnostics_one": "{{count}} diagnostic",
-      "diagnostics_other": "{{count}} diagnostics",
+      "cursor": "Line {line}, column {column}",
+      "mermaid": "Mermaid {version}",
+      "diagnostics": "{count, plural, one {# diagnostic} other {# diagnostics}}",
       "noDiagnostics": "No diagnostics"
     },
     "splitter": { "label": "Resize editor and preview panes" },
     "regionHint": "Press F6 to cycle regions"
   },
   "agentChip": {
-    "label": "Agent",
     "state": {
       "disconnected": "Agent disconnected",
       "idle": "Agent idle",
@@ -38,15 +39,14 @@
   "editor": {
     "title": "Source",
     "toolbar": { "label": "Editor actions", "wrap": "Toggle soft wrap", "format": "Format document" },
-    "gutter": { "label": "Line numbers and diagnostics", "errorBadge": "Error on line {{line}}", "warningBadge": "Warning on line {{line}}" },
-    "placeholder": "The document editor mounts here.",
-    "mountNote": "Editor host — source view"
+    "gutter": { "label": "Line numbers and diagnostics", "errorBadge": "Error on line {line}", "warningBadge": "Warning on line {line}" },
+    "placeholder": "The document editor mounts here."
   },
   "preview": {
     "title": "Preview",
     "empty": { "title": "No diagrams yet", "body": "Add a mermaid code block to your document to see it rendered here." },
     "frame": {
-      "label": "Diagram {{id}}",
+      "label": "Diagram {id}",
       "mount": "Diagram surface",
       "loading": "Rendering diagram",
       "toolbar": "Diagram actions",
@@ -58,13 +58,13 @@
       "zoomOut": "Zoom out",
       "zoomReset": "Reset zoom",
       "zoomFit": "Fit to frame",
-      "zoomLevel": "Zoom {{value}} percent"
+      "zoomLevel": "Zoom {value} percent"
     },
-    "error": { "title": "This diagram could not be rendered", "line": "Line {{line}}" },
+    "error": { "title": "This diagram could not be rendered", "line": "Line {line}" },
     "warning": { "title": "This diagram rendered with warnings" },
     "diagnostic": {
-      "parse": "Parse error: unexpected token near '{{token}}'.",
-      "unknownType": "Unknown diagram type '{{type}}'.",
+      "parse": "Parse error: unexpected token near “{token}”.",
+      "unknownType": "Unknown diagram type “{type}”.",
       "lintLongLabel": "Node label is long enough to overflow its shape."
     }
   },
@@ -73,12 +73,13 @@
     "disconnected": { "title": "No agent connected", "body": "Connect a local agent to generate, explain and refactor diagrams.", "action": "Connect agent" },
     "transcript": { "label": "Session transcript", "streaming": "Agent is responding" },
     "plan": { "label": "Plan", "status": { "pending": "Pending", "active": "In progress", "done": "Done" } },
-    "toolCall": { "label": "Tool call", "status": { "pending": "Queued", "running": "Running", "success": "Completed", "failed": "Failed" } },
-    "prompt": { "label": "Message the agent", "placeholder": "Ask the agent to change this document", "send": "Send message", "context": "Context: {{block}}", "contextRemove": "Remove block context" },
+    "toolCall": { "status": { "pending": "Queued", "running": "Running", "success": "Completed", "failed": "Failed" } },
+    "prompt": { "label": "Message the agent", "placeholder": "Ask the agent to change this document", "send": "Send message", "context": "Context: {block}", "contextRemove": "Remove block context" },
     "permission": {
       "title": "Permission required",
-      "tool": "Tool: {{tool}}",
-      "target": "Target: {{target}}",
+      "announce": "Permission required: {tool}",
+      "tool": "Tool: {tool}",
+      "target": "Target: {target}",
       "allowOnce": "Allow once",
       "alwaysSession": "Always this session",
       "deny": "Deny",
@@ -86,7 +87,7 @@
     },
     "diff": {
       "title": "Proposed edit",
-      "file": "File: {{file}}",
+      "file": "File: {file}",
       "before": "Before",
       "after": "After",
       "accept": "Accept edit",
