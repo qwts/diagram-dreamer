@@ -105,7 +105,7 @@ K2, K3, L1, L3, L6, M1, and the Q1 fixture-seam question.
 **Still open, and unblocked by anything here:** B5's ICU migration is done but only
 `en` exists, so the pseudo-loc gate still needs a pseudo bundle (Phase 2). L2
 (`packages/design-tokens` generating the theme), L4 (no Save control), L5 (no pan
-control), L8 (Storybook, pending **Q9**) are Phase 2/3 by design. Questions Q2, Q3,
+control), L8 (Storybook — **Q9**, deferred to Phase 3) are Phase 2/3 by design. Questions Q2, Q3,
 Q4, Q6, Q10 and Q11 were answered in the course of the work — the reasoning is in
 each commit body; reverse any of them if you disagree.
 
@@ -165,12 +165,14 @@ invariant-2 guard that fails the build if anything imports `@tanstack/react-star
 again.
 
 **Resolved this phase:** B5 (pseudo bundle now exists), E8 via **Q5**, E12 via
-**Q7**, F4, J1–J3, and the whole Phase 2 gate list. `border-strong` was added as a
+**Q7**, **Q9** (Storybook — answered "not here"), F4, J1–J3, and the whole Phase 2
+gate list. `border-strong` was added as a
 token and ratified in DESIGN.md; DESIGN.md now states the `button-primary`
 "one per surface" rule scopes to a surface, not a viewport.
 
-**Still open going into Phase 3:** **Q9** (Storybook — SPEC §10.4 requires it,
-CLAUDE.md's Phase 2 list omits it; I did not add it unilaterally). L2
+**Carried into Phase 3:** **Q9** (Storybook — SPEC §10.4 requires it, CLAUDE.md's
+Phase 2 list omits it; deferred to Phase 3 so it is configured once, against the
+monorepo layout, alongside the component tests that justify it). L2
 (`packages/design-tokens` generating the theme from DESIGN.md), L4 (no Save
 control), L5 (no pan control), and the monorepo migration itself.
 
@@ -300,7 +302,7 @@ Contract-permitted set: React, Tailwind v4, Radix/shadcn, i18next, react-resizab
 | L5  | cleanup            | **No pan controls.** SPEC §8 MVP requires "Pan/zoom on diagrams" and §9 requires "diagram pan/zoom **via keyboard**". `DiagramFrame` has four zoom controls and zero pan controls or testids.                                                                                                                                                                                                              | `DiagramFrame.tsx:163-207`; `testids.ts:56-59` | Add pan affordances + testids, or record the deferral in the fixture contract.                                                               | S      |
 | L6  | cleanup            | **No `accTitle`/`accDescr` seam.** SPEC §9: "Diagrams get accessible names/descriptions (Mermaid `accTitle`/`accDescr` surfaced and agent-fillable)". `DiagramBlock` has no fields for them, and `DiagramFrame` names the article `"Diagram {{id}}"` — an identifier, not an accessible name.                                                                                                              | `types/shell.ts:18-26`; `DiagramFrame.tsx:50`  | Add `accTitle?` / `accDescr?` to `DiagramBlock`; prefer them for the accessible name. Types-only, safe now.                                  | S      |
 | L7  | cleanup            | **`DocumentModel` is missing frontmatter fields.** SPEC §5 says frontmatter carries theme, mermaid version, and direction/RTL hints. The type has `mermaidVersion` only — no `theme`, no `direction`. This is also where the B4/Q4 RTL ownership question resolves.                                                                                                                                        | `types/shell.ts:28-40` vs SPEC §5              | Add `theme?` and `direction?` when Q4 is answered.                                                                                           | S      |
-| L8  | — (context)        | **M0 never happened.** SPEC §14 sequences M0 ("Monorepo, tokens, testid registry, transcript-player harness, CI gates — _seams before shell_") **before** M1's shell generation. The shell exists; `packages/design-tokens`, the transcript player, and every CI gate do not. Storybook (SPEC §10.4, "per shell component, a11y addon on") is likewise absent and is not in CLAUDE.md's Phase 2 gate list. | SPEC §10.4, §14                                | This is why CLAUDE.md has a Phase 3. See Q9 on whether Storybook joins the Phase 2 gates.                                                    | —      |
+| L8  | — (context)        | **M0 never happened.** SPEC §14 sequences M0 ("Monorepo, tokens, testid registry, transcript-player harness, CI gates — _seams before shell_") **before** M1's shell generation. The shell exists; `packages/design-tokens`, the transcript player, and every CI gate do not. Storybook (SPEC §10.4, "per shell component, a11y addon on") is likewise absent and is not in CLAUDE.md's Phase 2 gate list. | SPEC §10.4, §14                                | This is why CLAUDE.md has a Phase 3. Q9 settled Storybook: deferred there too, with the rest of §10.                                         | —      |
 
 ### M. Documentation defects (`docs/SPEC.md`, Lovable-authored)
 
@@ -333,7 +335,7 @@ Two of the original questions were **resolved by the documents** and are now fin
 - _Lagoon on decorative icons_ → DESIGN.md:108 is unambiguous ("If it isn't interactive or live, it isn't Lagoon"), but both flagged icons sit on cards whose **state** is live — the permission card while awaiting a decision, the diff card while pending. I read "live element" as covering them and have **not** filed a violation. Say the word if you read it strictly and I'll recolor both to slate.
 - _Permission card focus_ → SPEC §7.2's "non-blocking approval surface" settles it; filed as **F3** with the announce-don't-focus fix. Q6 below is only about which of the two remedies you want.
 
-**Status at a glance.** Eight were answered in the course of Phase 1 and two more in Phase 2 — the reasoning for each is in the commit that acted on it, and any of them can be reversed. **One remains genuinely open (Q9)**, plus one confirm on Lagoon.
+**Status at a glance.** Eight were answered in the course of Phase 1 and three more in Phase 2 — the reasoning for each is in the commit that acted on it, and any of them can be reversed. **All eleven are now answered**, with one confirm outstanding on Lagoon.
 
 |        | Question                            | Status                                                                                                                                 |
 | ------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -346,7 +348,7 @@ Two of the original questions were **resolved by the documents** and are now fin
 | Q6     | Permission card remedy              | **done** — announce-only (`abbe825`)                                                                                                   |
 | Q7     | Border contrast                     | **done (Phase 2)** — added `border-strong` (3:1+, both themes) for control outlines; plain `border` stays decorative                   |
 | Q8     | `zod` / `tw-animate-css`            | **done** — dropped `zod`, kept `tw-animate-css` (`4081a8b`)                                                                            |
-| **Q9** | **Storybook in the Phase 2 gates?** | **OPEN** — scope call, and it sizes Phase 2                                                                                            |
+| **Q9** | **Storybook in the Phase 2 gates?** | **done (Phase 2)** — no: deferred to Phase 3 with the rest of the §10 seams                                                            |
 | Q10    | 404 and error routes                | **done** — deleted the 404, kept a translated error boundary (`ae6f5a6`)                                                               |
 | Q11    | `preview.diagnostic.unknownType`    | **done** — kept as a reserved key (`1edbe24`)                                                                                          |
 | —      | Lagoon on two decorative icons      | **confirm** — left as-is, reading "live" as covering the card's state                                                                  |
@@ -371,7 +373,14 @@ Two of the original questions were **resolved by the documents** and are now fin
 
 **Q8 — `zod` and `tw-animate-css` (H5). — ANSWERED: dropped `zod` only.** Neither is on the permitted list. `zod`'s single use is replaceable by a six-line validator. `tw-animate-css` supplies the animation classes for the four surviving shadcn components — dropping it changes how dialogs and menus animate, which is a visual decision. Keep both, drop both, or drop `zod` only?
 
-**Q9 — Does Storybook join the Phase 2 gates (L8)? — OPEN.** SPEC §10.4 requires it per shell component with the a11y addon; CLAUDE.md's Phase 2 list omits it. Add it to Phase 2, defer to Phase 3 with the rest of the M0 seams, or drop it in favour of the Playwright + axe coverage?
+**Q9 — Does Storybook join the Phase 2 gates (L8)? — ANSWERED in Phase 2: deferred to Phase 3, after the monorepo move.** SPEC §10.4 requires it per shell component with the a11y addon; CLAUDE.md's Phase 2 list omits it. Deferred, for four reasons:
+
+1. **§10.4 is not separable from the rest of §10.** That section describes the target test architecture for the whole monorepo, and almost none of it exists yet: §10.2's transcript player needs `packages/test-agents`, §10.3's fake renderer needs the render pipeline, MSW needs a network the shell does not have, Lighthouse needs the Electron app. Storybook is one bullet in that list. Honouring it alone, while every other seam in the same list waits for Phase 3, would be arbitrary.
+2. **It is not a gate.** CLAUDE.md Phase 2 is "make them pass, then make them required" — merge blockers. Storybook is a development surface and a host for component tests. The a11y coverage its addon would add is already held: axe at WCAG 2.1 AA over 20 fixture states in both themes, plus RTL. What Storybook adds beyond that — per-component isolation and a browsable catalogue — is real, and is not a merge gate.
+3. **Phase 3 would make us configure it twice.** The tree moves to `apps/electron/renderer`; a Storybook config, its Vite integration and its CI job all name the layout. Installing now buys no coverage in the interval and guarantees rework.
+4. **It should arrive with the tests that justify it.** CLAUDE.md's dependency rule treats anything beyond the permitted list as guilty until justified. Storybook is a large addition, and SPEC's own table pairs it with testing-library at the Component layer. It should land as component tests, not as empty scaffolding.
+
+Reverse this by running `storybook init` with the Vite builder plus `@storybook/addon-a11y`, adding a story per `src/components/**`, and adding a fourth CI job — nothing in Phase 2 obstructs it, and the testid registry and fixtures are already the props Storybook would need.
 
 **Q10 — Are 404 and error routes reachable at all in Electron (B2, E7)? — ANSWERED: 404 deleted.** Under memory history with two routes and no address bar, a 404 is unreachable by user action; a render crash still needs a surface. Delete `NotFoundComponent` and keep a token-styled `ErrorComponent`, or keep both?
 
@@ -402,8 +411,8 @@ Sequenced so each step is independently verifiable and nothing later depends on 
 16. **L3** — testid casing sweep (blocked on **Q3**); do it before Phase 2 writes tests against the registry. (S)
 17. **K2** — enable `noUnusedLocals`, `noUnusedParameters`, `no-unused-vars`; fix fallout. Feeds the Phase 2 zero-warning gate. (S)
 
-**Deferred to Phase 3 by design:** L2 (`packages/design-tokens` generating the theme), L8 (the rest of the M0 seams — transcript player, Storybook pending Q9). _CI gates landed in Phase 2._
+**Deferred to Phase 3 by design:** L2 (`packages/design-tokens` generating the theme), L8 (the rest of the M0 seams — transcript player, and Storybook per Q9). _CI gates landed in Phase 2._
 
-**Blocked on your input:** Q2 (step 7), Q3 (step 16), Q4 (step 14), Q6 (step 10), Q8 (step 11's dependency list), Q10 (step 8), Q11 (step 12). Q1, Q5, Q7 and Q9 shape Phase 2 rather than Phase 1 and can wait. _(All answered as of Phase 2 except **Q9**.)_
+**Blocked on your input:** Q2 (step 7), Q3 (step 16), Q4 (step 14), Q6 (step 10), Q8 (step 11's dependency list), Q10 (step 8), Q11 (step 12). Q1, Q5, Q7 and Q9 shape Phase 2 rather than Phase 1 and can wait. _(All answered as of Phase 2.)_
 
 **Not blocking, but worth knowing:** L4 (no Save control) and L5 (no pan controls) are shell gaps against SPEC §8's MVP list. Both are additive and belong in M2 rather than this hardening pass — flagged so they don't get lost.
