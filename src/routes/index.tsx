@@ -3,16 +3,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { StateSwitcher } from "@/components/dev/StateSwitcher";
 import {
+  agentFixtureKeys,
   agentFixtures,
+  documentFixtureKeys,
   documentFixtures,
   parseFixtureState,
   type AgentFixtureKey,
   type DocumentFixtureKey,
 } from "@/fixtures";
 import type { AgentSession, PermissionResolution } from "@/types/shell";
-
-const DOC_KEYS = ["empty", "multi", "failed"] as const;
-const AGENT_KEYS = ["disconnected", "idle", "streaming", "permission", "diff"] as const;
 
 interface WorkspaceSearch {
   doc?: DocumentFixtureKey;
@@ -26,8 +25,8 @@ interface WorkspaceSearch {
  */
 const validateSearch = (search: Record<string, unknown>): WorkspaceSearch => {
   const fromState = parseFixtureState(search["state"]);
-  const doc = fromState?.doc ?? DOC_KEYS.find((key) => key === search["doc"]);
-  const agent = fromState?.agent ?? AGENT_KEYS.find((key) => key === search["agent"]);
+  const doc = fromState?.doc ?? documentFixtureKeys.find((key) => key === search["doc"]);
+  const agent = fromState?.agent ?? agentFixtureKeys.find((key) => key === search["agent"]);
   return { ...(doc && { doc }), ...(agent && { agent }) };
 };
 
