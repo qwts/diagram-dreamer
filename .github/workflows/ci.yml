@@ -83,6 +83,27 @@ jobs:
             echo "::error::built bundle references an external origin"
             exit 1
           fi
+      # The diagram sandbox is the one document we ship that is *meant* to hold
+      # third-party code, so a URL grep is the wrong gate for it: Mermaid's
+      # dependencies carry documentation links in their error messages, and none
+      # of them are fetches. What makes them unreachable is the policy, so the
+      # policy is what gets asserted — a self-contained document that cannot
+      # load anything, with its one script pinned by hash.
+      - name: Diagram sandbox is self-contained and locked down
+        run: |
+          SANDBOX="$RENDERER/dist/sandbox.html"
+          test -f "$SANDBOX" || { echo "::error::$SANDBOX was not built"; exit 1; }
+          # The whole policy, matched exactly, with only the script hash free to
+          # vary. Deliberately brittle: `grep -q "default-src 'none'"` would
+          # still pass if a CDN were appended to script-src, and this document
+          # is the one place in the tree where third-party code executes.
+          EXPECTED="content=\"default-src 'none'; script-src 'sha256-[A-Za-z0-9+/=]+'; style-src 'unsafe-inline'; img-src data:; font-src data:\""
+          grep -qE "$EXPECTED" "$SANDBOX" || {
+            echo "::error::sandbox CSP is not the expected locked-down policy"
+            grep -o 'content="default-src[^\"]*"' "$SANDBOX" || true
+            exit 1
+          }
+
       # Phase 3 moved the tree to apps/electron/renderer. If a build ever writes
       # to the old repo-root location again, the move has been half-undone.
       - name: Build output stays inside the renderer package

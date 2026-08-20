@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
-    "build:pseudo": "VITE_PSEUDO=1 vite build --outDir dist-pseudo",
+    "build": "vite build && vite build --config vite.sandbox.config.ts",
+    "build:pseudo": "VITE_PSEUDO=1 vite build --outDir dist-pseudo && VITE_PSEUDO=1 vite build --config vite.sandbox.config.ts --outDir dist-pseudo",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "check:contrast": "node scripts/check-contrast.mjs",

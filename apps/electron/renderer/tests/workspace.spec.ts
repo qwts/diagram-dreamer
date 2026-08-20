@@ -139,6 +139,12 @@ test("diagrams pan by keyboard, and fit restores both axes", async ({ page }) =>
   expect(await translate()).toBe("0px 24px");
   await page.getByTestId("preview.diagram-frame.zoom-fit").first().click();
   expect(await translate()).toBe(NEUTRAL);
+
+  // ...and now that the sandbox reports a rendered size, fit also *fits*. The
+  // flowchart fixture is wider than the preview pane, so fitting it must scale
+  // below 100% — the assertion that separates fitting from resetting.
+  const zoomLabel = page.locator("footer", { hasText: "Zoom" }).first();
+  await expect(zoomLabel).not.toContainText("Zoom 100 percent");
 });
 
 test("the save control tracks save state", async ({ page }) => {

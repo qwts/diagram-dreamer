@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Bot,
@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { Toolbar } from "@/components/common/Toolbar";
 import { VellumButton } from "@/components/common/VellumButton";
+import { DiagnosticCard } from "./DiagnosticCard";
+import { useDiagramSurface } from "./useDiagramSurface";
 import { testIds } from "@/testids";
 import type { DiagramBlock } from "@/types/shell";
 
@@ -27,17 +29,24 @@ import type { DiagramBlock } from "@/types/shell";
 const PAN_STEP = 24;
 const PAN_STEP_COARSE = 96;
 
+/** Matches the zoom buttons' range, so every control agrees on the limits. */
+const ZOOM_MIN = 25;
+const ZOOM_MAX = 400;
+
 interface DiagramFrameProps {
   block: DiagramBlock;
   onCopy?: ((blockId: string) => void) | undefined;
   onExportSvg?: ((blockId: string) => void) | undefined;
   onExportPng?: ((blockId: string) => void) | undefined;
   onAskAgent?: ((blockId: string) => void) | undefined;
+  /** Mermaid theme for the whole document (SPEC §5 frontmatter). */
+  theme?: string | undefined;
 }
 
 /**
- * Card chrome around a diagram. A sandboxed iframe mounts into the mount slot
- * later; this component never renders Mermaid itself.
+ * Card chrome around a diagram. Mermaid itself renders inside a sandboxed
+ * iframe supplied by `@vellum/core` — this component never renders a diagram,
+ * it decides where one goes and what to show when there isn't one.
  */
 export function DiagramFrame({
   block,
@@ -45,10 +54,19 @@ export function DiagramFrame({
   onExportSvg,
   onExportPng,
   onAskAgent,
+  theme,
 }: DiagramFrameProps) {
   const { t } = useTranslation();
   const [zoom, setZoom] = useState(100);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const title = block.accTitle ?? t("preview.frame.label", { id: block.id });
+  const { containerRef, state: surface } = useDiagramSurface({
+    title,
+    source: block.source,
+    theme,
+  });
 
   /**
    * Arrow keys pan; Shift takes a coarser step for crossing a large diagram
@@ -67,18 +85,44 @@ export function DiagramFrame({
     event.preventDefault();
     setPan((current) => ({ x: current.x + delta.x, y: current.y + delta.y }));
   };
+
+  /**
+   * Fit the diagram to the frame, rather than merely undoing zoom and pan.
+   *
+   * Until the sandbox landed there was nothing to fit *to* — no diagram had a
+   * measured size — so "fit to frame" and "reset zoom" were the same handler
+   * and the distinction was a label. Now the sandbox reports its rendered size,
+   * so this can scale down to whatever the viewport can show. Never scales
+   * *up*: a small diagram blown up to fill the pane is not what anyone means by
+   * fitting, and 100% stays the ceiling.
+   */
+  const fitToFrame = () => {
+    setPan({ x: 0, y: 0 });
+    const available = viewportRef.current?.clientWidth;
+    if (surface.status !== "ready" || !available || surface.width === 0) {
+      setZoom(100);
+      return;
+    }
+    const ratio = Math.floor((available / surface.width) * 100);
+    setZoom(Math.max(ZOOM_MIN, Math.min(100, ratio)));
+  };
+
   const severity = block.diagnostic?.severity ?? "error";
   const isWarning = severity === "warning";
-  const diagnosticTone = isWarning
-    ? "bg-warning-surface text-warning"
-    : "bg-danger-surface text-danger";
+
+  // Two ways a block can be broken, and the reader is shown one card either
+  // way. The model's own diagnostic wins: it describes the document, while a
+  // live failure describes this attempt at rendering it.
+  const modelFailed = block.state === "error" && block.diagnostic !== undefined;
+  const liveFailed = !modelFailed && surface.status === "failed";
+  const failed = modelFailed || liveFailed;
 
   return (
     <article
       data-testid={testIds.preview.diagramFrame}
       // Prefer the diagram's own accessible name over the block id, which
       // identifies without describing (SPEC §9).
-      aria-label={block.accTitle ?? t("preview.frame.label", { id: block.id })}
+      aria-label={title}
       {...(block.accDescr !== undefined && { "aria-description": block.accDescr })}
       className="group rounded-md border border-border bg-surface-raised"
     >
@@ -96,12 +140,18 @@ export function DiagramFrame({
           >
             {block.diagramType}
           </span>
-          {block.state === "error" ? (
+          {failed ? (
             <span
-              className={`inline-flex items-center gap-xs text-body-sm ${isWarning ? "text-warning" : "text-danger"}`}
+              className={`inline-flex items-center gap-xs text-body-sm ${
+                modelFailed && isWarning ? "text-warning" : "text-danger"
+              }`}
             >
               <CircleAlert className="size-3.5" aria-hidden="true" />
-              {t("preview.error.line", { line: block.diagnostic?.line ?? block.startLine })}
+              {t("preview.error.line", {
+                line: modelFailed
+                  ? (block.diagnostic?.line ?? block.startLine)
+                  : ((surface.status === "failed" ? surface.line : undefined) ?? block.startLine),
+              })}
             </span>
           ) : null}
         </div>
@@ -150,29 +200,21 @@ export function DiagramFrame({
         </Toolbar>
       </header>
 
-      {block.state === "error" && block.diagnostic ? (
-        <div
-          data-testid={testIds.preview.errorCard}
-          data-severity={severity}
-          role="group"
-          aria-label={t(isWarning ? "preview.warning.title" : "preview.error.title")}
-          className={`m-md rounded-md p-md ${diagnosticTone}`}
-        >
-          <div className="flex items-start gap-sm">
-            <CircleAlert className="mt-2xs size-4 shrink-0" aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="text-body-md font-medium">
-                {t(isWarning ? "preview.warning.title" : "preview.error.title")}
-              </p>
-              <p className="mt-xs font-mono text-body-sm">
-                {t(block.diagnostic.messageKey, block.diagnostic.messageValues ?? {})}
-              </p>
-              <p data-testid={testIds.preview.errorLineRef} className="mt-xs text-body-sm">
-                {t("preview.error.line", { line: block.diagnostic.line })}
-              </p>
-            </div>
-          </div>
-        </div>
+      {modelFailed && block.diagnostic ? (
+        <DiagnosticCard
+          severity={severity}
+          message={t(block.diagnostic.messageKey, block.diagnostic.messageValues ?? {})}
+          line={block.diagnostic.line}
+        />
+      ) : liveFailed && surface.status === "failed" ? (
+        <DiagnosticCard
+          severity="error"
+          // Mermaid's parser speaks English and only English. Wrapping its text
+          // in a translated sentence is honest; pretending the text itself is
+          // localisable would not be.
+          message={t("preview.error.mermaid", { message: surface.message })}
+          line={surface.line ?? block.startLine}
+        />
       ) : (
         <div className="p-lg">
           {/*
@@ -189,6 +231,7 @@ export function DiagramFrame({
            */}
           <div
             data-testid={testIds.preview.viewport}
+            ref={viewportRef}
             role="group"
             tabIndex={0}
             aria-label={t("preview.frame.viewport")}
@@ -197,13 +240,25 @@ export function DiagramFrame({
           >
             <div
               data-testid={testIds.preview.mountSlot}
-              className="flex min-h-48 items-center justify-center rounded-md border border-dashed border-border bg-paper text-body-sm text-slate"
+              ref={containerRef}
+              className={
+                surface.status === "ready"
+                  ? "flex justify-center rounded-md bg-paper"
+                  : "flex min-h-48 items-center justify-center rounded-md border border-dashed border-border bg-paper text-body-sm text-slate"
+              }
               style={{
                 zoom: `${zoom}%`,
                 translate: `${pan.x}px ${pan.y}px`,
               }}
             >
-              {block.state === "loading" ? (
+              {/*
+               * The sandbox iframe is appended here by `useDiagramSurface`. The
+               * placeholder below is what is shown when no renderer is injected
+               * — the fixture-driven states the `?state=` switcher exercises —
+               * and while the first render is in flight.
+               */}
+              {surface.status === "ready" ? null : block.state === "loading" ||
+                surface.status === "rendering" ? (
                 <span className="inline-flex items-center gap-sm">
                   <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                   {t("preview.frame.loading")}
@@ -216,7 +271,7 @@ export function DiagramFrame({
         </div>
       )}
 
-      {block.state !== "error" ? (
+      {!failed ? (
         <footer className="flex items-center justify-between gap-sm border-t border-border px-md py-sm">
           <span className="text-body-sm text-slate">
             {t("preview.frame.zoomLevel", { value: zoom })}
@@ -227,7 +282,7 @@ export function DiagramFrame({
               size="icon"
               aria-label={t("preview.frame.zoomOut")}
               data-testid={testIds.preview.zoomOut}
-              onClick={() => setZoom((value) => Math.max(25, value - 25))}
+              onClick={() => setZoom((value) => Math.max(ZOOM_MIN, value - 25))}
             >
               <Minus className="size-4" aria-hidden="true" />
             </VellumButton>
@@ -236,7 +291,7 @@ export function DiagramFrame({
               size="icon"
               aria-label={t("preview.frame.zoomIn")}
               data-testid={testIds.preview.zoomIn}
-              onClick={() => setZoom((value) => Math.min(400, value + 25))}
+              onClick={() => setZoom((value) => Math.min(ZOOM_MAX, value + 25))}
             >
               <Plus className="size-4" aria-hidden="true" />
             </VellumButton>
@@ -264,13 +319,7 @@ export function DiagramFrame({
               size="icon"
               aria-label={t("preview.frame.zoomFit")}
               data-testid={testIds.preview.zoomFit}
-              // Fit restores both axes. It was a byte-identical duplicate of
-              // reset-zoom, which left "fit to frame" unable to do the one thing
-              // that distinguishes it — bring an off-screen diagram back.
-              onClick={() => {
-                setZoom(100);
-                setPan({ x: 0, y: 0 });
-              }}
+              onClick={fitToFrame}
             >
               <Maximize2 className="size-4" aria-hidden="true" />
             </VellumButton>

@@ -1,5 +1,10 @@
 /**
- * Domain contracts. **Types only — no logic, ever, until the real `core` lands.**
+ * Domain contracts, plus the render pipeline they describe.
+ *
+ * This file was types-only through Phase 3. M2 brings the first real logic into
+ * the package — `./render` — which is the point: SPEC §4 puts load-bearing
+ * logic here precisely so the shell never grows any. The contracts below stay
+ * what they were.
  *
  * These are the shapes the renderer is handed, extracted per CLAUDE.md Phase 3
  * so the shell and whatever eventually produces this data agree on one
@@ -45,6 +50,15 @@ export interface DiagramBlock {
   endLine: number;
   state: DiagramBlockState;
   diagnostic?: Diagnostic | undefined;
+  /**
+   * The block's Mermaid source — what actually gets rendered (SPEC §6).
+   *
+   * Optional because the shell must still work without it: with no source the
+   * frame shows its mount placeholder, which is what keeps the fixtures and the
+   * `?state=` switcher meaningful as pure presentation. A parsed document
+   * always sets it.
+   */
+  source?: string | undefined;
   /**
    * Mermaid `accTitle` / `accDescr`, surfaced from the diagram source (SPEC §9).
    * Author-supplied content, so already in the document's language — never run
@@ -145,3 +159,18 @@ export interface AgentSession {
   diff?: DiffPreview | undefined;
   contextBlockId?: string | undefined;
 }
+
+/**
+ * Render pipeline (SPEC §6). `render/sandbox` is deliberately **not**
+ * re-exported here: it pulls in the whole of Mermaid, and only the sandbox
+ * document should ever do that. The app reaches it as `@vellum/core/sandbox`,
+ * which keeps a megabyte of diagram library out of every importer of a type.
+ */
+export { DiagramRenderer } from "./render/renderer";
+export type {
+  DiagramRendererOptions,
+  DiagramSurface,
+  RenderOptions,
+  RenderResult,
+} from "./render/renderer";
+export { PROTOCOL_VERSION } from "./render/protocol";

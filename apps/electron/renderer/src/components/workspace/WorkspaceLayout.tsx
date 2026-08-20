@@ -100,7 +100,7 @@ export function WorkspaceLayout({
             data-testid={testIds.workspace.resizeHandle}
           />
           <ResizablePanel defaultSize={agentOpen ? "37" : "55"} minSize="25">
-            <PreviewPane blocks={doc.blocks} onAskAgent={onAskAgent} />
+            <PreviewPane blocks={doc.blocks} theme={doc.theme} onAskAgent={onAskAgent} />
           </ResizablePanel>
 
           {agentOpen ? (

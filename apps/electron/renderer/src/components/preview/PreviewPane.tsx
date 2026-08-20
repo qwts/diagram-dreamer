@@ -10,9 +10,11 @@ interface PreviewPaneProps {
   onExportSvg?: ((blockId: string) => void) | undefined;
   onExportPng?: ((blockId: string) => void) | undefined;
   onAskAgent?: ((blockId: string) => void) | undefined;
+  /** Document frontmatter's Mermaid theme, passed through to every frame. */
+  theme?: string | undefined;
 }
 
-export function PreviewPane({ blocks, ...handlers }: PreviewPaneProps) {
+export function PreviewPane({ blocks, theme, ...handlers }: PreviewPaneProps) {
   const { t } = useTranslation();
 
   return (
@@ -41,7 +43,7 @@ export function PreviewPane({ blocks, ...handlers }: PreviewPaneProps) {
         ) : (
           <div className="flex flex-col gap-lg">
             {blocks.map((block) => (
-              <DiagramFrame key={block.id} block={block} {...handlers} />
+              <DiagramFrame key={block.id} block={block} theme={theme} {...handlers} />
             ))}
           </div>
         )}
