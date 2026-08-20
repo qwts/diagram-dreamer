@@ -1,0 +1,132 @@
+{
+  "app": { "name": "Vellum", "tagline": "Mermaid document renderer" },
+  "workspace": {
+    "region": { "main": "Document workspace", "editor": "Document source", "preview": "Diagram preview", "agent": "Agent session", "status": "Workspace status" },
+    "toolbar": {
+      "label": "Document actions",
+      "export": "Export",
+      "exportSvg": "Export all as SVG",
+      "exportPng": "Export all as PNG",
+      "exportMarkdown": "Export markdown",
+      "theme": "Toggle theme",
+      "themeLight": "Switch to dark theme",
+      "themeDark": "Switch to light theme",
+      "settings": "Open settings",
+      "agentPanel": "Toggle agent panel"
+    },
+    "save": { "saved": "Saved", "unsaved": "Unsaved changes", "saving": "Saving", "error": "Save failed" },
+    "status": {
+      "label": "Workspace status",
+      "cursor": "Line {{line}}, column {{column}}",
+      "mermaid": "Mermaid {{version}}",
+      "diagnostics_one": "{{count}} diagnostic",
+      "diagnostics_other": "{{count}} diagnostics",
+      "noDiagnostics": "No diagnostics"
+    },
+    "splitter": { "label": "Resize editor and preview panes" },
+    "regionHint": "Press F6 to cycle regions"
+  },
+  "agentChip": {
+    "label": "Agent",
+    "state": {
+      "disconnected": "Agent disconnected",
+      "idle": "Agent idle",
+      "streaming": "Agent working",
+      "awaiting-permission": "Agent needs permission"
+    }
+  },
+  "editor": {
+    "title": "Source",
+    "toolbar": { "label": "Editor actions", "wrap": "Toggle soft wrap", "format": "Format document" },
+    "gutter": { "label": "Line numbers and diagnostics", "errorBadge": "Error on line {{line}}", "warningBadge": "Warning on line {{line}}" },
+    "placeholder": "The document editor mounts here.",
+    "mountNote": "Editor host — source view"
+  },
+  "preview": {
+    "title": "Preview",
+    "empty": { "title": "No diagrams yet", "body": "Add a mermaid code block to your document to see it rendered here." },
+    "frame": {
+      "label": "Diagram {{id}}",
+      "mount": "Diagram surface",
+      "loading": "Rendering diagram",
+      "toolbar": "Diagram actions",
+      "copy": "Copy diagram source",
+      "exportSvg": "Export diagram as SVG",
+      "exportPng": "Export diagram as PNG",
+      "askAgent": "Ask agent about this block",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "zoomReset": "Reset zoom",
+      "zoomFit": "Fit to frame",
+      "zoomLevel": "Zoom {{value}} percent"
+    },
+    "error": { "title": "This diagram could not be rendered", "line": "Line {{line}}" },
+    "warning": { "title": "This diagram rendered with warnings" },
+    "diagnostic": {
+      "parse": "Parse error: unexpected token near '{{token}}'.",
+      "unknownType": "Unknown diagram type '{{type}}'.",
+      "lintLongLabel": "Node label is long enough to overflow its shape."
+    }
+  },
+  "agent": {
+    "panel": { "title": "Agent", "label": "Agent session", "close": "Close agent panel" },
+    "disconnected": { "title": "No agent connected", "body": "Connect a local agent to generate, explain and refactor diagrams.", "action": "Connect agent" },
+    "transcript": { "label": "Session transcript", "streaming": "Agent is responding" },
+    "plan": { "label": "Plan", "status": { "pending": "Pending", "active": "In progress", "done": "Done" } },
+    "toolCall": { "label": "Tool call", "status": { "pending": "Queued", "running": "Running", "success": "Completed", "failed": "Failed" } },
+    "prompt": { "label": "Message the agent", "placeholder": "Ask the agent to change this document", "send": "Send message", "context": "Context: {{block}}", "contextRemove": "Remove block context" },
+    "permission": {
+      "title": "Permission required",
+      "tool": "Tool: {{tool}}",
+      "target": "Target: {{target}}",
+      "allowOnce": "Allow once",
+      "alwaysSession": "Always this session",
+      "deny": "Deny",
+      "resolved": { "allowOnce": "Allowed once", "alwaysSession": "Allowed for this session", "deny": "Denied" }
+    },
+    "diff": {
+      "title": "Proposed edit",
+      "file": "File: {{file}}",
+      "before": "Before",
+      "after": "After",
+      "accept": "Accept edit",
+      "reject": "Reject edit",
+      "status": { "accepted": "Edit accepted", "rejected": "Edit rejected" }
+    },
+    "message": {
+      "greeting": "I read the document and found three diagrams. Which one should I work on?",
+      "planIntro": "Here is how I will refactor the deployment flowchart.",
+      "streaming": "Rewriting the flowchart so the transport seam is explicit"
+    },
+    "step": { "readDoc": "Read the document", "locateBlock": "Locate the target block", "rewrite": "Rewrite the diagram", "verify": "Verify it parses" }
+  },
+  "welcome": {
+    "title": "Vellum",
+    "subtitle": "Write markdown, render Mermaid, work alongside a local agent.",
+    "openFile": "Open file",
+    "recent": { "title": "Recent files", "empty": "No recent documents yet.", "openedAt": { "today": "Today", "yesterday": "Yesterday", "lastWeek": "Last week" } },
+    "templates": {
+      "title": "Templates",
+      "flowchart": { "name": "Flowchart", "description": "Left-to-right process with decision branches." },
+      "sequence": { "name": "Sequence diagram", "description": "Message exchange between services." },
+      "state": { "name": "State machine", "description": "States and transitions for a workflow." },
+      "er": { "name": "Entity relationship", "description": "Tables and relationships for a data model." },
+      "class": { "name": "Class diagram", "description": "Types and their associations." },
+      "gantt": { "name": "Gantt chart", "description": "Milestones across a delivery timeline." }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Preferences apply to this workspace.",
+    "theme": { "label": "Theme", "light": "Light", "dark": "Dark", "system": "System" },
+    "mermaidVersion": { "label": "Default Mermaid version" },
+    "language": { "label": "Language", "en": "English", "ar": "Arabic", "de": "German", "ja": "Japanese" },
+    "cancel": "Cancel",
+    "save": "Save changes"
+  },
+  "dev": { "title": "Fixture state", "toggle": "Open fixture state switcher", "close": "Close fixture state switcher" },
+  "fixtures": {
+    "doc": { "empty": "Empty document", "multi": "Multi-block document", "failed": "One failed block" },
+    "agent": { "disconnected": "Agent disconnected", "idle": "Agent idle", "streaming": "Agent streaming", "permission": "Permission pending", "diff": "Diff pending" }
+  }
+}
