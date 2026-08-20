@@ -197,12 +197,15 @@ export const agentDisconnected: AgentSession = {
 };
 
 /**
- * The block the agent fixtures point at. Taken from the parsed document rather
- * than written out, because block ids are content hashes now — a literal here
- * would go stale the first time somebody edits the fixture's flowchart, and
- * the context chip would name a block that is not in the document.
+ * The block the agent fixtures point at, and the lines it occupies.
+ *
+ * Read from the parsed document rather than written out, because block ids are
+ * content hashes now and the line numbers move whenever the fixture prose does.
+ * A literal would go stale the first time either changed, and the context chip
+ * would name a block that is not in the document.
  */
-const contextBlockId = multiBlockDocument.blocks[0]!.id;
+const contextBlock = multiBlockDocument.blocks[0]!;
+const contextBlockId = contextBlock.id;
 
 export const agentIdle: AgentSession = {
   state: "idle",
@@ -263,7 +266,7 @@ export const agentPermissionPending: AgentSession = {
   permission: {
     id: "perm-1",
     toolName: "fs/write",
-    targetSummary: "docs/architecture.md — replace lines 5-10",
+    targetSummary: `docs/architecture.md — replace lines ${contextBlock.startLine}-${contextBlock.endLine}`,
   },
 };
 

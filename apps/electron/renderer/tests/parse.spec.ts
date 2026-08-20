@@ -46,6 +46,57 @@ test("a mermaid fence inside another code block is example text, not a diagram",
   expect(blocks[0]?.diagramType).toBe("sequenceDiagram");
 });
 
+test("a tilde-fenced example hides the backtick fence inside it", () => {
+  // The mirror of the case above, and the one that slipped through first: a
+  // closing fence has to use the opening fence's character, or the outer block
+  // ends at the inner example's ``` and the example becomes a diagram.
+  const { blocks } = parseDocument(
+    doc(
+      "~~~markdown",
+      "```mermaid",
+      "flowchart LR",
+      "```",
+      "~~~",
+      "",
+      "```mermaid",
+      "sequenceDiagram",
+      "```",
+    ),
+  );
+
+  expect(blocks).toHaveLength(1);
+  expect(blocks[0]?.diagramType).toBe("sequenceDiagram");
+});
+
+test("a tilde-fenced diagram is a diagram", () => {
+  const { blocks } = parseDocument(doc("~~~mermaid", "flowchart LR", "~~~"));
+  expect(blocks).toHaveLength(1);
+  expect(blocks[0]?.diagramType).toBe("flowchart");
+});
+
+test("a fence indented four spaces is code, not a diagram", () => {
+  // CommonMark: four spaces makes the line indented code. Documentation that
+  // shows Mermaid source this way would otherwise render it.
+  const { blocks } = parseDocument(
+    doc("Here is how you write one:", "", "    ```mermaid", "    flowchart LR", "    ```"),
+  );
+  expect(blocks).toHaveLength(0);
+
+  // Three is still a fence.
+  expect(parseDocument(doc("   ```mermaid", "   flowchart LR", "   ```")).blocks).toHaveLength(1);
+});
+
+test("a diagram inside a list item is still a diagram", () => {
+  // The three-space rule is relative to the enclosing block, not the left
+  // margin. Applying it literally would silently drop every diagram written
+  // inside a bullet — worse than the bug it fixes.
+  const { blocks } = parseDocument(
+    doc("- First step:", "", "  ```mermaid", "  flowchart LR", "    A --> B", "  ```", "", "Done."),
+  );
+  expect(blocks).toHaveLength(1);
+  expect(blocks[0]?.diagramType).toBe("flowchart");
+});
+
 test("block ids follow content, not position", () => {
   const first = parseDocument(doc("```mermaid", "flowchart LR", "  A --> B", "```"));
   const shifted = parseDocument(
