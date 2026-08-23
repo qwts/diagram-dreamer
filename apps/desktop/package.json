@@ -9,7 +9,6 @@
     "build:pseudo": "VITE_PSEUDO=1 vite build --outDir dist-pseudo && VITE_PSEUDO=1 vite build --config vite.sandbox.config.ts --outDir dist-pseudo",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "check:contrast": "node scripts/check-contrast.mjs",
     "test": "playwright test",
     "test:a11y": "playwright test --project=chromium tests/a11y.spec.ts"
   },
