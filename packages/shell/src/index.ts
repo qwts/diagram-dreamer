@@ -13,6 +13,7 @@
 
 export { getRouter } from "./router";
 export { DiagramRendererContext, useDiagramRenderer } from "./components/preview/renderer-context";
+export { HostCapabilitiesContext, useHostCapabilities } from "./host/capabilities-context";
 export { RTL_LANGUAGES, isRtlLanguage } from "./i18n";
 
 /**

@@ -1,8 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider, createMemoryHistory } from "@tanstack/react-router";
-import { DiagramRenderer } from "@vellum/core";
-import { DiagramRendererContext, getRouter } from "@vellum/shell";
+import { DiagramRenderer, type HostCapabilities } from "@vellum/core";
+import { DiagramRendererContext, HostCapabilitiesContext, getRouter } from "@vellum/shell";
 
 import "@vellum/shell/styles.css";
 
@@ -44,13 +44,31 @@ const diagramRenderer = new DiagramRenderer({
   sandboxUrl: new URL("sandbox.html", document.baseURI).href,
 });
 
+/**
+ * What this host can do (SPEC §4). Empty today, and deliberately not faked.
+ *
+ * Every member of `HostCapabilities` needs the main process behind it —
+ * `openDocument` a native dialog, `saveDocument` a write to disk — and the
+ * preload bridge that exposes them is a later milestone. Supplying handlers
+ * that resolve to nothing would put stub logic in a composition root, which is
+ * the opposite of leaving a seam (CLAUDE.md invariant 1).
+ *
+ * So the provider goes in now and the members arrive with the bridge. An empty
+ * set is a legitimate state the contract is built to express, not a
+ * placeholder: the shell must render sensibly for a host that offers nothing,
+ * because the `?state=` fixture switcher is exactly that host.
+ */
+const hostCapabilities: HostCapabilities = {};
+
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element #root is missing from index.html");
 
 createRoot(rootElement).render(
   <StrictMode>
     <DiagramRendererContext value={diagramRenderer}>
-      <RouterProvider router={router} />
+      <HostCapabilitiesContext value={hostCapabilities}>
+        <RouterProvider router={router} />
+      </HostCapabilitiesContext>
     </DiagramRendererContext>
   </StrictMode>,
 );
