@@ -178,3 +178,6 @@ export { PROTOCOL_VERSION } from "./render/protocol";
 /** Document model (SPEC §5). Pure functions of text; no I/O. */
 export { DEFAULT_MERMAID_VERSION, parseDocument, toDocumentModel } from "./document/parse";
 export type { DocumentIdentity, ParsedDocument, ParseOptions } from "./document/parse";
+
+/** Host contract (SPEC §4). What a host can do, and so what the shell may offer. */
+export type { ExportArtifact, HostCapabilities, OpenedDocument } from "./host/capabilities";
