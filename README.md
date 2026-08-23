@@ -49,7 +49,7 @@ switcher appears in the corner; any state is also addressable directly:
 /?state=<document>-<agent>
 ```
 
-Both halves are enumerated in `apps/electron/renderer/src/fixtures/index.ts`.
+Both halves are enumerated in `packages/shell/src/fixtures/index.ts`.
 The lists are derived from the fixtures themselves, so adding one wires it into
 the dev switcher, the route's search-param validation and the test sweep at
 once.

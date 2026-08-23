@@ -19,8 +19,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Where the renderer's build output lives after the Phase 3 monorepo move.
-  RENDERER: apps/electron/renderer
+  # Where the desktop host's build output lives. The shell itself is a
+  # library under packages/ and emits nothing.
+  RENDERER: apps/desktop
 
 jobs:
   # Advanced CodeQL, invoked from the governed CI lifecycle rather than run by
@@ -147,7 +148,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @vellum/renderer exec playwright install --with-deps chromium
+      - run: pnpm --filter @vellum/desktop exec playwright install --with-deps chromium
       - name: Playwright gates
         run: pnpm run test
       - uses: actions/upload-artifact@v4

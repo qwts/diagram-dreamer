@@ -2,11 +2,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider, createMemoryHistory } from "@tanstack/react-router";
 import { DiagramRenderer } from "@vellum/core";
+import { DiagramRendererContext, getRouter } from "@vellum/shell";
 
-import "./styles.css";
-import "./i18n";
-import { getRouter } from "./router";
-import { DiagramRendererContext } from "./components/preview/renderer-context";
+import "@vellum/shell/styles.css";
 
 /**
  * The renderer loads from file:// inside Electron, where path and hash history

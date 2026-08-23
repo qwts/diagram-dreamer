@@ -1,12 +1,16 @@
 /**
  * Test-side view of the fixture enumeration and the testid registry.
  *
- * Both are imported from `src/` rather than restated, so a fixture or id added
+ * Both are imported from the shell rather than restated, so a fixture or id added
  * there is covered here automatically and cannot drift — a PR review caught an
  * earlier smoke script that hardcoded its own list.
  */
-export { fixtureStates, documentFixtureKeys, agentFixtureKeys } from "../src/fixtures";
-export { testIds } from "../src/testids";
+export {
+  fixtureStates,
+  documentFixtureKeys,
+  agentFixtureKeys,
+  testIds,
+} from "@vellum/shell/testing";
 
 /** Ids that must be present on every workspace state, whatever the fixture. */
 export const ALWAYS_PRESENT = [

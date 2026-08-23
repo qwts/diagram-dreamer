@@ -12,7 +12,7 @@ Authoritative documents (keep in `docs/`):
 ## Invariants — enforce always, never "improve"
 
 1. **Shell stays dumb.** No data fetching, no business logic, no persistence in the shell. All logic arrives via injected dependencies (`packages/core`, `packages/acp-client` — not yet present; leave seams, don't stub logic).
-2. **This ships in Electron. There is no server.** No SSR, no server functions, no loaders doing work. Router uses memory history behind a single constructor parameter — no runtime detection/fallback logic.
+2. **There is no server, and the shell never knows its host.** No SSR, no server functions, no loaders doing work — the shell is a static SPA that Electron loads from `file://` and the web host serves as files. Electron adds capabilities; it is never a prerequisite for running Vellum. History, the renderer, and every capability arrive as constructor parameters from the host's composition root — no runtime detection, no fallback logic, no `isElectron`.
 3. **Tokens are law.** No color/radius/spacing/type literals outside the theme layer. Lagoon (`tertiary`) appears only on interactive or live elements. Warnings use `warning` tokens, never `danger`. Do not restyle, "modernize," or reinterpret the design.
 4. **Zero hardcoded user-facing strings.** Every string through i18next, resources bundled synchronously at init. Logical CSS properties only (`ms-/me-/ps-/pe-`, `start/end`).
 5. **testids.ts is the only source of test ids** (`region.component.element`). Every interactive/state-bearing element carries one.
@@ -48,7 +48,7 @@ Work the audit findings. Priority: SSR removal → i18n → routing (memory hist
 
 ### Phase 3 — Monorepo migration
 
-Move to `apps/electron/renderer` per SPEC §4 layout. Extract shared shell types (`DocumentModel`, `DiagramBlock`, `AgentSession`, `PermissionRequest`, `DiffPreview`, `Diagnostic`) toward `packages/core` contracts — types only, no logic yet. Set up workspace tooling (pnpm workspaces or turbo) and CI running the Phase 2 gates.
+Shell in `packages/shell`, hosts in `apps/desktop` and `apps/web`, per SPEC §4 layout. Extract shared shell types (`DocumentModel`, `DiagramBlock`, `AgentSession`, `PermissionRequest`, `DiffPreview`, `Diagnostic`) toward `packages/core` contracts — types only, no logic yet. Set up workspace tooling (pnpm workspaces or turbo) and CI running the Phase 2 gates.
 
 ### Definition of done (M1)
 

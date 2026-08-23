@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { fileURLToPath } from "node:url";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
@@ -67,9 +68,29 @@ const devSandboxCspPlugin = (): Plugin => ({
   },
 });
 
+/*
+ * `@/` resolves to the shell's source, not to this app's. Declared here rather
+ * than left to tsconfig discovery: `vite-tsconfig-paths` searches from the Vite
+ * root, which would never reach a sibling package, and a silently unresolved
+ * alias fails as a wall of missing-module errors rather than one clear one.
+ */
+const SHELL_SRC = fileURLToPath(new URL("../../packages/shell/src", import.meta.url));
+
 export default defineConfig({
+  resolve: { alias: { "@": SHELL_SRC } },
   plugins: [
-    tanstackRouter({ target: "react", autoCodeSplitting: true }),
+    /*
+     * The routes live in the shell, not in this app. The plugin has to be told
+     * so explicitly: its defaults assume routes sit under the Vite root, and a
+     * host that owns no routes is exactly the arrangement that makes a second
+     * host possible.
+     */
+    tanstackRouter({
+      target: "react",
+      autoCodeSplitting: true,
+      routesDirectory: SHELL_SRC + "/routes",
+      generatedRouteTree: SHELL_SRC + "/routeTree.gen.ts",
+    }),
     react(),
     tailwindcss(),
     tsconfigPaths(),
