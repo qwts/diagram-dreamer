@@ -41,11 +41,17 @@ repo/
     transport/     # stdio-over-IPC (Electron), ws-bridge (future)
     test-agents/   # ACP transcript player + recorded fixtures
     design-tokens/ # tokens as the single source of truth, fed to Lovable
+    shell/         # the presentation layer, host-neutral (Lovable-derived)
   apps/
-    electron/      # main + preload + renderer shell (Lovable-derived)
-    web/           # future hosted shell
+    desktop/       # main + preload + the shell's composition root
+    web/           # hosted preview host
     bridge/        # future localhost daemon
 ```
+
+The shell is a package, not an app, because two hosts consume it. Electron is
+not a prerequisite for running Vellum: the web host serves the same shell as a
+static SPA and simply supplies fewer capabilities. A host owns its composition
+root and nothing else — the shell never detects which one it is running in.
 
 ```mermaid
 flowchart LR
@@ -60,7 +66,7 @@ flowchart LR
   A -- document as workspace --> D[(In-memory document model)]
 ```
 
-**Key principle:** Lovable only ever generates the shell layer in `apps/electron/renderer`. The ACP client, document model, and render pipeline are injected dependencies, never generated code.
+**Key principle:** Lovable only ever generates the shell layer in `packages/shell`. The ACP client, document model, and render pipeline are injected dependencies, never generated code.
 
 ### Trade-off: Electron vs Tauri
 

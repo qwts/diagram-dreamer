@@ -1,5 +1,5 @@
 packages:
-  - "apps/*/*"
+  - "apps/*"
   - "packages/*"
 
 # A flat node_modules, not pnpm's default symlinked store.

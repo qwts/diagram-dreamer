@@ -18,7 +18,7 @@ export default tseslint.config(
       ".lovable",
       "test-results",
       "playwright-report",
-      "src/routeTree.gen.ts",
+      "**/routeTree.gen.ts",
     ],
   },
   {
@@ -34,8 +34,9 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // CLAUDE.md invariant 2: this ships in Electron; there is no server.
-      // These are the imports through which SSR would come back.
+      // CLAUDE.md invariant 2: there is no server, under either host — the
+      // shell is a static SPA that Electron loads from file:// and a web host
+      // serves as files. These are the imports through which SSR would return.
       "no-restricted-imports": [
         "error",
         {
@@ -49,7 +50,7 @@ export default tseslint.config(
             {
               group: ["@tanstack/react-start", "@tanstack/react-start/*", "@tanstack/start*"],
               message:
-                "TanStack Start was removed in M1 (CLAUDE.md invariant 2). The renderer is a plain Vite SPA with a memory-history router.",
+                "TanStack Start was removed in M1 (CLAUDE.md invariant 2). The shell is a plain Vite SPA whose history the host supplies.",
             },
           ],
         },

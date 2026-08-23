@@ -1,0 +1,38 @@
+{
+  "name": "@vellum/desktop",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build && vite build --config vite.sandbox.config.ts",
+    "build:pseudo": "VITE_PSEUDO=1 vite build --outDir dist-pseudo && VITE_PSEUDO=1 vite build --config vite.sandbox.config.ts --outDir dist-pseudo",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "test": "playwright test",
+    "test:a11y": "playwright test --project=chromium tests/a11y.spec.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "1.170.18",
+    "@vellum/core": "workspace:*",
+    "@vellum/design-tokens": "workspace:*",
+    "@vellum/shell": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
+    "@tailwindcss/vite": "^4.2.1",
+    "@tanstack/router-plugin": "1.168.23",
+    "@types/node": "^22.16.5",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.8.3",
+    "vite": "^8.2.0",
+    "vite-tsconfig-paths": "^6.0.2"
+  }
+}
