@@ -56,27 +56,33 @@ export interface OpenedDocument {
   text: string;
 }
 
-/** What `exportArtifact` is asked to deliver. */
-export interface ExportArtifact {
-  /**
-   * `svg` and `png` are single diagrams; `markdown` is the whole document. The
-   * shell decides which, because the shell owns the control that was clicked;
-   * the host decides where the bytes go.
-   */
-  format: "svg" | "png" | "markdown";
+interface ExportArtifactBase {
   /**
    * A suggested name including its extension. A host that prompts (a native
    * save dialog) seeds the field with it; a host that does not (a browser
    * download) uses it as the file name.
    */
   suggestedFileName: string;
-  /**
-   * `svg` and `markdown` arrive as text, `png` as bytes. Kept as a union rather
-   * than normalised to one, because normalising means either base64-encoding
-   * every SVG or decoding every PNG for no reader's benefit.
-   */
-  contents: string | Uint8Array;
 }
+
+/**
+ * What `exportArtifact` is asked to deliver.
+ *
+ * `svg` and `png` are single diagrams; `markdown` is the whole document. The
+ * shell decides which, because the shell owns the control that was clicked; the
+ * host decides where the bytes go.
+ *
+ * A discriminated union, rather than `format` and `contents` varying
+ * independently. Text and bytes are not interchangeable — normalising to one
+ * would mean base64-encoding every SVG or decoding every PNG for no reader's
+ * benefit — so the pairing *is* the contract. Two loose unions would admit
+ * `{ format: "png", contents: "…" }` and still leave a host that branches on
+ * `format` unable to narrow `contents`, buying runtime validation of an
+ * invariant the type can enforce outright.
+ */
+export type ExportArtifact =
+  | (ExportArtifactBase & { format: "svg" | "markdown"; contents: string })
+  | (ExportArtifactBase & { format: "png"; contents: Uint8Array });
 
 export interface HostCapabilities {
   /**
