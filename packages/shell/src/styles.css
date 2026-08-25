@@ -81,6 +81,7 @@
   --color-destructive-foreground: var(--on-tertiary);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-scrim: var(--scrim);
   /* Form controls are identified by their boundary, so they take the 3:1 one. */
   --color-input: var(--border-strong);
   --color-ring: var(--tertiary);
@@ -118,6 +119,7 @@
   --muted: #f2f1ed;
   --border: #e3e1dc;
   --border-strong: #8d887c;
+  --scrim: #000000;
   --danger: #b3261e;
   --danger-surface: #fbeae9;
   --warning: #8a5a00;
@@ -138,6 +140,7 @@
   --muted: #23272c;
   --border: #2a2e33;
   --border-strong: #6a717d;
+  --scrim: #000000;
   --danger: #f2b8b5;
   --danger-surface: #38211f;
   --warning: #e0a949;
