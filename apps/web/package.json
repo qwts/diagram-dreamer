@@ -1,5 +1,5 @@
 {
-  "name": "@vellum/desktop",
+  "name": "@vellum/web",
   "private": true,
   "sideEffects": false,
   "type": "module",

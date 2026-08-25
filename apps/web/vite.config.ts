@@ -25,12 +25,12 @@ export default defineConfig({
     devSandboxCspPlugin(),
   ],
   /**
-   * Relative, and the one line in this file that is genuinely desktop-specific.
-   * Electron loads the built renderer with `loadFile`, so every absolute asset
-   * path would resolve against the filesystem root. `apps/web` is served over
-   * http and uses "/".
+   * Absolute, and the one line here that differs from `apps/desktop`. This host
+   * is served over http from a document root, where "/" is a real prefix;
+   * desktop uses "./" because Electron loads its build with `loadFile` and every
+   * absolute path would resolve against the filesystem root.
    */
-  base: "./",
+  base: "/",
   server: { cors: devServerCors },
   optimizeDeps: { entries: devScanEntries },
   build: {

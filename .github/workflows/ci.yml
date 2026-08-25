@@ -18,11 +18,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Where the desktop host's build output lives. The shell itself is a
-  # library under packages/ and emits nothing.
-  RENDERER: apps/desktop
-
 jobs:
   # Advanced CodeQL, invoked from the governed CI lifecycle rather than run by
   # GitHub's default setup (ENG-0149). Default setup runs as the
@@ -66,9 +61,21 @@ jobs:
       - name: design.md lint
         run: npx --yes @google/design.md lint DESIGN.md
 
+  # Every host, not just the one that happens to be primary. SPEC §4 says
+  # Electron is not a prerequisite for running Vellum, and a gate that only ever
+  # built `apps/desktop` could not tell the difference between that being true
+  # and nobody having checked.
   build:
-    name: build is a static SPA
+    name: build is a static SPA (${{ matrix.host }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [desktop, web]
+    env:
+      # Where this host's build output lives. The shell and core are libraries
+      # under packages/ and emit nothing.
+      HOST_DIR: apps/${{ matrix.host }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -77,14 +84,15 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
-      # The renderer ships inside Electron with no server. If a server or worker
-      # entry ever reappears in the output, that invariant has been broken.
+      - run: pnpm --filter @vellum/${{ matrix.host }} build
+      # Neither host has a server: the desktop renderer loads from file:// and
+      # the web host is served as files. If a server or worker entry ever
+      # reappears in the output, that invariant has been broken.
       - name: No server or worker bundle
         run: |
-          if find "$RENDERER/dist" -name '_worker*' -o -name 'server*' -o -name 'nitro*' | grep -q .; then
-            echo "::error::build emitted a server/worker bundle; the renderer must be a static SPA"
-            find "$RENDERER/dist" -name '_worker*' -o -name 'server*' -o -name 'nitro*'
+          if find "$HOST_DIR/dist" -name '_worker*' -o -name 'server*' -o -name 'nitro*' | grep -q .; then
+            echo "::error::build emitted a server/worker bundle; every host must be a static SPA"
+            find "$HOST_DIR/dist" -name '_worker*' -o -name 'server*' -o -name 'nitro*'
             exit 1
           fi
       # The app must run fully offline. Fonts and i18n are bundled; nothing may
@@ -96,11 +104,10 @@ jobs:
       #   - loopback, which is by definition not an external origin. TanStack
       #     Router carries `http://localhost` as the fallback it assigns to
       #     `router.origin` when `window.origin` is null — a placeholder for
-      #     URL parsing, never a request target, and unreachable for us anyway
-      #     since the renderer runs on memory history.
+      #     URL parsing, never a request target.
       - name: No external origins in the bundle
         run: |
-          if grep -rInoE 'https?://[a-zA-Z0-9.-]+' "$RENDERER/dist/assets" \
+          if grep -rInoE 'https?://[a-zA-Z0-9.-]+' "$HOST_DIR/dist/assets" \
              | grep -vE 'react\.dev|react\.i18next\.com|tailwindcss\.com|www\.w3\.org|json-schema\.org' \
              | grep -vE '//(localhost|127\.0\.0\.1)' \
              | grep . ; then
@@ -115,7 +122,7 @@ jobs:
       # load anything, with its one script pinned by hash.
       - name: Diagram sandbox is self-contained and locked down
         run: |
-          SANDBOX="$RENDERER/dist/sandbox.html"
+          SANDBOX="$HOST_DIR/dist/sandbox.html"
           test -f "$SANDBOX" || { echo "::error::$SANDBOX was not built"; exit 1; }
           # The whole policy, matched exactly, with only the script hash free to
           # vary. Deliberately brittle: `grep -q "default-src 'none'"` would
@@ -128,18 +135,25 @@ jobs:
             exit 1
           }
 
-      # Phase 3 moved the tree to apps/electron/renderer. If a build ever writes
-      # to the old repo-root location again, the move has been half-undone.
-      - name: Build output stays inside the renderer package
+      # Phase 3 moved the tree under apps/. If a build ever writes to the old
+      # repo-root location again, the move has been half-undone.
+      - name: Build output stays inside the host package
         run: |
           if [ -e dist ] || [ -e dist-pseudo ]; then
-            echo "::error::build wrote to the repo root; output belongs in $RENDERER"
+            echo "::error::build wrote to the repo root; output belongs in $HOST_DIR"
             exit 1
           fi
 
+  # The same specs, from packages/shell, against each host's own build. This is
+  # the gate that makes "the shell is host-neutral" checkable: a change that
+  # quietly assumes Electron passes under `desktop` and fails under `web`.
   e2e:
-    name: render, axe, RTL, pseudo-localization
+    name: render, axe, RTL, pseudo-localization (${{ matrix.host }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [desktop, web]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -148,12 +162,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @vellum/desktop exec playwright install --with-deps chromium
+      - run: pnpm --filter @vellum/${{ matrix.host }} exec playwright install --with-deps chromium
       - name: Playwright gates
-        run: pnpm run test
+        run: pnpm --filter @vellum/${{ matrix.host }} test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
-          path: ${{ env.RENDERER }}/playwright-report/
+          name: playwright-report-${{ matrix.host }}
+          path: apps/${{ matrix.host }}/playwright-report/
           retention-days: 7
