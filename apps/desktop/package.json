@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
-    "test:a11y": "playwright test --project=chromium tests/a11y.spec.ts"
+    "test:a11y": "playwright test --project=chromium a11y.spec"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.18",
