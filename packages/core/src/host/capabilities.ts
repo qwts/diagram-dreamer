@@ -82,7 +82,12 @@ interface ExportArtifactBase {
  */
 export type ExportArtifact =
   | (ExportArtifactBase & { format: "svg" | "markdown"; contents: string })
-  | (ExportArtifactBase & { format: "png"; contents: Uint8Array });
+  // `Uint8Array<ArrayBuffer>`, not a bare `Uint8Array`. The default parameter is
+  // `ArrayBufferLike`, which admits a `SharedArrayBuffer` — and `Blob` does not,
+  // so a bare `Uint8Array` here is a type no web host can actually hand to the
+  // browser without a cast. Nothing produces these bytes from shared memory, so
+  // naming the buffer costs nothing and removes the cast from every consumer.
+  | (ExportArtifactBase & { format: "png"; contents: Uint8Array<ArrayBuffer> });
 
 export interface HostCapabilities {
   /**
