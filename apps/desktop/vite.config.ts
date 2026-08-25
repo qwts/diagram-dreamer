@@ -1,123 +1,38 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { fileURLToPath } from "node:url";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
-// Renderer CSP per SPEC §12. Injected into the built HTML only: Vite's dev
-// server needs inline module preambles and a websocket for HMR, and the packaged
-// renderer is the surface that actually needs locking down.
-//   - no remote origins at all; the app ships offline (fonts and i18n are bundled)
-//   - blob: for img/frame so the future sandboxed Mermaid iframe and PNG export work
-const CSP = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  // data: is required, not lax: Vite inlines font files under the 4 KiB asset
-  // limit as data: URIs, so `font-src 'self'` alone blocks them and the app
-  // silently falls back to system fonts in the packaged build. Caught by the
-  // Playwright console-error gate. Still no remote origin is permitted.
-  "font-src 'self' data:",
-  "connect-src 'self'",
-  "frame-src 'self' blob:",
-  "object-src 'none'",
-  "base-uri 'none'",
-  "form-action 'none'",
-].join("; ");
-
-const cspPlugin = (): Plugin => ({
-  name: "vellum-csp",
-  transformIndexHtml: {
-    order: "post",
-    handler(html, ctx) {
-      if (!ctx.bundle) return html; // dev server: leave HMR alone
-      // sandbox.html carries its own policy and is built by
-      // vite.sandbox.config.ts; the renderer's CSP would be wrong for it.
-      if (ctx.path.endsWith("sandbox.html")) return html;
-      return html.replace(
-        "</head>",
-        `  <meta http-equiv="Content-Security-Policy" content="${CSP}" />\n  </head>`,
-      );
-    },
-  },
-});
-
-/**
- * Dev only. `sandbox.html` ships with a placeholder where its script hash goes,
- * filled in by the separate sandbox build; served raw by the dev server, that
- * placeholder is an unparseable source expression and the browser falls back to
- * blocking every script in the frame — a sandbox that silently renders nothing.
- *
- * Strip the policy in dev rather than fake it. The frame is still opaque-origin
- * and still cannot reach the app; what it loses is the network lockdown, and
- * the honest reason is that under the dev server the sandbox's script *is* a
- * network fetch. Same trade the renderer's own CSP already makes above, for the
- * same reason, and neither applies to anything that ships.
- */
-const devSandboxCspPlugin = (): Plugin => ({
-  name: "vellum-sandbox-dev-csp",
-  apply: "serve",
-  transformIndexHtml: {
-    order: "pre",
-    handler(html, ctx) {
-      if (!ctx.path.endsWith("sandbox.html")) return html;
-      return html.replace(/\s*<meta\s+http-equiv="Content-Security-Policy"[^>]*>/, "");
-    },
-  },
-});
-
-/*
- * `@/` resolves to the shell's source, not to this app's. Declared here rather
- * than left to tsconfig discovery: `vite-tsconfig-paths` searches from the Vite
- * root, which would never reach a sibling package, and a silently unresolved
- * alias fails as a wall of missing-module errors rather than one clear one.
- */
-const SHELL_SRC = fileURLToPath(new URL("../../packages/shell/src", import.meta.url));
+import {
+  SHELL_SRC,
+  cspPlugin,
+  devSandboxCspPlugin,
+  devScanEntries,
+  devServerCors,
+  sandboxDevServePlugin,
+  shellRouterPlugin,
+} from "../vite-host.shared.ts";
 
 export default defineConfig({
   resolve: { alias: { "@": SHELL_SRC } },
   plugins: [
-    /*
-     * The routes live in the shell, not in this app. The plugin has to be told
-     * so explicitly: its defaults assume routes sit under the Vite root, and a
-     * host that owns no routes is exactly the arrangement that makes a second
-     * host possible.
-     */
-    tanstackRouter({
-      target: "react",
-      autoCodeSplitting: true,
-      routesDirectory: SHELL_SRC + "/routes",
-      generatedRouteTree: SHELL_SRC + "/routeTree.gen.ts",
-    }),
+    shellRouterPlugin(),
     react(),
     tailwindcss(),
     tsconfigPaths(),
     cspPlugin(),
+    sandboxDevServePlugin(),
     devSandboxCspPlugin(),
   ],
-  // Relative base so the bundle loads from file:// in the Electron shell.
+  /**
+   * Relative, and the one line in this file that is genuinely desktop-specific.
+   * Electron loads the built renderer with `loadFile`, so every absolute asset
+   * path would resolve against the filesystem root. `apps/web` is served over
+   * http and uses "/".
+   */
   base: "./",
-  server: {
-    /**
-     * Dev only, and required for the diagram sandbox to work at all.
-     *
-     * The sandbox frame runs at an opaque origin, so it sends `Origin: null`.
-     * Module scripts are always fetched with CORS, and Vite answers with its own
-     * origin rather than a wildcard — so under `vite dev` every diagram fails
-     * with "Diagram sandbox failed to start" while the built app is fine.
-     * Nothing in the gates catches it, because the gates test the build.
-     *
-     * Deliberately not `cors: true` / `origin: "*"`, which would let any page on
-     * the internet read this dev server's source. `"null"` is the one extra
-     * origin the sandbox needs; the loopback pattern preserves Vite's own
-     * behaviour for everything else.
-     */
-    cors: {
-      origin: [/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/, "null"],
-    },
-  },
+  server: { cors: devServerCors },
+  optimizeDeps: { entries: devScanEntries },
   build: {
     outDir: "dist",
     emptyOutDir: true,

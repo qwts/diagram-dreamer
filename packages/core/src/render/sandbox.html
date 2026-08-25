@@ -15,8 +15,12 @@
       talk to.
 
       `script-src` is filled in at build time with the hash of the one inlined
-      script, by the `vellum-sandbox` plugin in vite.config.ts. Hashes work at an
-      opaque origin, where `'self'` matches nothing at all.
+      script, by the `vellum-sandbox-inline` plugin in
+      apps/vite-sandbox.shared.ts. Hashes work at an opaque origin, where
+      `'self'` matches nothing at all.
+
+      This document lives in `@vellum/core` rather than in a host because every
+      host ships the same one. A copy per host is how a policy drifts.
     -->
     <meta
       http-equiv="Content-Security-Policy"
