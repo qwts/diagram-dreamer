@@ -101,6 +101,25 @@ export function DiagramFrame({
   };
 
   /**
+   * Whether there is a measured size to fit *to* yet.
+   *
+   * The sandbox is an out-of-process iframe rendering Mermaid, so Fit is
+   * reachable well before it reports back — and a wide diagram, the case where
+   * someone actually reaches for Fit, is the case Mermaid is slowest to
+   * measure. Gating the control on this is the fix for #16: the handler used to
+   * fall back to `setZoom(100)` when no size had arrived, so the button
+   * silently did something other than what it says, with nothing re-running it
+   * once the size landed.
+   *
+   * Disabled rather than hidden, matching `panReset` beside it and `Format` in
+   * the editor. The toolbar's roving focus already skips
+   * `button:not([disabled])`, so this costs no keyboard affordance, and nothing
+   * is taken away: `zoomReset` is a separate control that still resets to 100%,
+   * which is exactly what the broken fallback was doing.
+   */
+  const canFit = surface.status === "ready" && surface.width > 0;
+
+  /**
    * Fit the diagram to the frame, rather than merely undoing zoom and pan.
    *
    * Until the sandbox landed there was nothing to fit *to* — no diagram had a
@@ -109,14 +128,16 @@ export function DiagramFrame({
    * so this can scale down to whatever the viewport can show. Never scales
    * *up*: a small diagram blown up to fill the pane is not what anyone means by
    * fitting, and 100% stays the ceiling.
+   *
+   * Bails before touching pan or zoom rather than after. The control is
+   * disabled without a size, so reaching here anyway means the assumption
+   * broke — and resetting pan on the way out would be a second silent effect of
+   * the kind #16 was about.
    */
   const fitToFrame = () => {
-    setPan({ x: 0, y: 0 });
     const available = viewportRef.current?.clientWidth;
-    if (surface.status !== "ready" || !available || surface.width === 0) {
-      setZoom(100);
-      return;
-    }
+    if (surface.status !== "ready" || surface.width === 0 || !available) return;
+    setPan({ x: 0, y: 0 });
     const ratio = Math.floor((available / surface.width) * 100);
     setZoom(Math.max(ZOOM_MIN, Math.min(100, ratio)));
   };
@@ -378,8 +399,9 @@ export function DiagramFrame({
             <VellumButton
               variant="ghost"
               size="icon"
-              aria-label={t("preview.frame.zoomFit")}
+              aria-label={canFit ? t("preview.frame.zoomFit") : t("preview.frame.zoomFitPending")}
               data-testid={testIds.preview.zoomFit}
+              disabled={!canFit}
               onClick={fitToFrame}
             >
               <Maximize2 className="size-4" aria-hidden="true" />

@@ -137,7 +137,14 @@ test("diagrams pan by keyboard, and fit restores both axes", async ({ page }) =>
   await viewport.focus();
   await page.keyboard.press("ArrowUp");
   expect(await translate()).toBe("0px 24px");
-  await page.getByTestId("preview.diagram-frame.zoom-fit").first().click();
+
+  // Fit is offered only once the sandbox has reported a size, the same way
+  // reset-pan is offered only once there is pan to reset (#16). Asserting it
+  // here is what makes the wait a stated contract rather than a side effect of
+  // Playwright's actionability check.
+  const zoomFit = page.getByTestId("preview.diagram-frame.zoom-fit").first();
+  await expect(zoomFit).toBeEnabled();
+  await zoomFit.click();
   expect(await translate()).toBe(NEUTRAL);
 
   // ...and now that the sandbox reports a rendered size, fit also *fits*. The
