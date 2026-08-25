@@ -90,6 +90,7 @@
       "zoomOut": "Zoom out",
       "zoomReset": "Reset zoom",
       "zoomFit": "Fit to frame",
+      "zoomFitPending": "Fit to frame — available once the diagram has rendered",
       "zoomLevel": "Zoom {value} percent",
       "viewport": "Diagram viewport. Use the arrow keys to pan.",
       "panReset": "Reset pan",
