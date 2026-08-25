@@ -14,6 +14,7 @@ colors:
   muted: "#F2F1ED"
   border: "#E3E1DC"
   border-strong: "#8D887C"
+  scrim: "#000000"
   danger: "#B3261E"
   danger-surface: "#FBEAE9"
   warning: "#8A5A00"
@@ -31,6 +32,7 @@ colors:
   on-tertiary-dark: "#0B1416"
   border-dark: "#2A2E33"
   border-strong-dark: "#6A717D"
+  scrim-dark: "#000000"
   danger-dark: "#F2B8B5"
   danger-surface-dark: "#38211F"
   warning-dark: "#E0A949"
@@ -111,6 +113,8 @@ components:
     textColor: "{colors.secondary}"
     rounded: "{rounded.lg}"
     padding: 4px
+  dialog-scrim:
+    backgroundColor: "{colors.scrim}"
 ---
 
 ## Overview
@@ -127,6 +131,7 @@ Dark mode is a first-class surface, not an inversion: the same semantic roles ma
 - **Neutral (#FAFAF8):** Warm paper. App background and editor surface; softer than pure white so exported white-background diagrams still read as distinct objects.
 - **Surface-raised (#FFFFFF):** Panels, cards, dialogs — one step above paper, separated by `border`, not shadow-first.
 - **Border vs Border-strong:** `border` (#E3E1DC) is a _divider_ — it separates surfaces and sits at roughly 1.25:1, which is deliberate and correct for something purely decorative. `border-strong` (#8D887C) is for a boundary that **identifies a control**: the secondary button, which DESIGN.md defines as paper-on-paper with a border, and form inputs. Those clear 3:1 because WCAG 1.4.11 governs them. If a border is the only thing telling the user something is interactive, it is `border-strong`; otherwise it is `border`.
+- **Scrim (#000000):** The dimming layer behind a modal, used only at partial opacity and never as a fill. It is the one deliberately non-paper value in the palette: a scrim is not a surface the design puts anything on, it is the absence of the interface. Identical in both themes, because it dims whatever is behind it rather than participating in the theme. Not a status color, not a border, and never used for text or an interactive element — if something is drawn _on_ it, that thing belongs on `surface-raised`.
 - **Muted (#F2F1ED):** Recessed paper. The one step _below_ surface-raised: inert pill backgrounds, secondary-button hover, disabled or disconnected chrome. Never carries meaning on its own — it is the absence of state, which is why it is not one of the status colors.
 - **Danger / Warning / Success:** Diagnostics only (parse errors, lint findings, agent permission prompts). Never decorative. Every status color is always paired with an icon or text label — color is never the sole signal.
 - **The `*-surface` tints:** each semantic color that can back a filled region has an explicit surface token — `tertiary-surface`, `danger-surface`, `warning-surface`, `success-surface`. Use them; never approximate one with an alpha of the base color. A 10% Lagoon tint reads as the same idea but only reaches 4.4:1 against Lagoon text, which fails AA — the tokens are tuned to clear 4.5:1 in both themes.
