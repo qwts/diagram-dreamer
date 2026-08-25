@@ -2,10 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "vellum-dev",
+      "name": "vellum-desktop",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd apps/electron/renderer && npx vite dev --port 5173 --strictPort"],
+      "runtimeArgs": ["-c", "cd apps/desktop && npx vite dev --port 5173 --strictPort"],
       "port": 5173
+    },
+    {
+      "name": "vellum-web",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd apps/web && npx vite dev --port 5174 --strictPort"],
+      "port": 5174
     }
   ]
 }
