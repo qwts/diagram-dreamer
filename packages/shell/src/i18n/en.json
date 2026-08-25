@@ -4,6 +4,9 @@
     "body": "Something went wrong while rendering the workspace.",
     "retry": "Try again"
   },
+  "dialog": {
+    "close": "Close"
+  },
   "workspace": {
     "region": {
       "main": "Document workspace",
