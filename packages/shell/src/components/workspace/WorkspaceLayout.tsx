@@ -8,11 +8,23 @@ import { EditorHost } from "@/components/editor/EditorHost";
 import { PreviewPane } from "@/components/preview/PreviewPane";
 import { AgentPanel } from "@/components/agent/AgentPanel";
 import { testIds } from "@/testids";
-import type { AgentSession, DocumentModel, PermissionResolution } from "@/types/shell";
+import type {
+  AgentSession,
+  DocumentModel,
+  ExportFormat,
+  PermissionResolution,
+} from "@/types/shell";
 
 interface WorkspaceLayoutProps {
   document: DocumentModel;
   session: AgentSession;
+  /**
+   * Write the document back where it came from. Absent when the host has no
+   * `saveDocument` — the toolbar disables and explains rather than hiding.
+   */
+  onSave?: (() => void) | undefined;
+  /** One handler per deliverable format; see `TopToolbar`'s `onExport`. */
+  onExport?: Partial<Record<ExportFormat, () => void>> | undefined;
   onAskAgent?: ((blockId: string) => void) | undefined;
   onClearContext?: (() => void) | undefined;
   onResolvePermission?: ((id: string, resolution: PermissionResolution) => void) | undefined;
@@ -28,6 +40,8 @@ interface WorkspaceLayoutProps {
 export function WorkspaceLayout({
   document: doc,
   session,
+  onSave,
+  onExport,
   onAskAgent,
   onClearContext,
   onResolvePermission,
@@ -84,6 +98,8 @@ export function WorkspaceLayout({
       <TopToolbar
         document={doc}
         agentState={session.state}
+        onSave={onSave}
+        onExport={onExport}
         onOpenSettings={() => setSettingsOpen(true)}
         onToggleAgentPanel={() => setAgentOpen((value) => !value)}
       />

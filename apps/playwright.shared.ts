@@ -31,9 +31,23 @@ export interface HostGateOptions {
   port: number;
   /** Port for the pseudo-localization build. */
   pseudoPort: number;
+  /**
+   * This host's own spec directory, usually `new URL("tests/", import.meta.url)`.
+   *
+   * The shared gates above cannot say anything about capabilities, because the
+   * hosts deliberately differ: `apps/web` can export and cannot save, and a
+   * spec asserting either would be false next door. So the claim "the toolbar
+   * offers exactly what this host can do" is proved per host, against that
+   * host's build, in a directory the host owns.
+   *
+   * Required rather than optional: a host is defined by the capabilities it
+   * supplies, and one that supplies them without proving what the shell then
+   * offers is the gap #27 exists to close.
+   */
+  capabilityTests: URL;
 }
 
-export const hostGateConfig = ({ port, pseudoPort }: HostGateOptions) =>
+export const hostGateConfig = ({ port, pseudoPort, capabilityTests }: HostGateOptions) =>
   defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env["CI"],
@@ -58,6 +72,11 @@ export const hostGateConfig = ({ port, pseudoPort }: HostGateOptions) =>
         name: "pseudo",
         testDir: fileURLToPath(new URL("tests-pseudo", SHELL)),
         use: { ...devices["Desktop Chrome"], baseURL: `http://127.0.0.1:${pseudoPort}` },
+      },
+      {
+        name: "capabilities",
+        testDir: fileURLToPath(capabilityTests),
+        use: { ...devices["Desktop Chrome"], baseURL: `http://127.0.0.1:${port}` },
       },
     ],
     // `--host 127.0.0.1` is load-bearing, not decoration. Vite preview otherwise

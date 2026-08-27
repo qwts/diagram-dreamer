@@ -316,6 +316,27 @@ export function parseDocument(text: string, options: ParseOptions = {}): ParsedD
   };
 }
 
+/**
+ * The document's text, recovered from the model.
+ *
+ * `parseDocument` keeps the line array authoritative — `sourcePreview` is
+ * `parsed.lines`, which is every line of the input after `\r\n` normalisation
+ * — so joining it back is the inverse of the split, not a reconstruction. This
+ * is what `saveDocument` is handed and what a markdown export delivers.
+ *
+ * It exists as a named function rather than a `.join("\n")` at each call site
+ * so there is one place to change if the model ever carries the text directly,
+ * and so no caller has to decide for itself whether a field named "preview"
+ * can be trusted as the whole document.
+ *
+ * Note the one thing it does not round-trip: a CRLF document comes back with
+ * LF endings, because the parser normalised them before anything else could
+ * see them. Line *content* is untouched.
+ */
+export function documentText(document: Pick<DocumentModel, "sourcePreview">): string {
+  return document.sourcePreview.join("\n");
+}
+
 export interface DocumentIdentity {
   id: string;
   fileName: string;
