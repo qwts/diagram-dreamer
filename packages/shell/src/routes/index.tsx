@@ -91,14 +91,23 @@ function WorkspacePage() {
   const [cursor, setCursor] = useState<(Cursor & { key: DocumentFixtureKey }) | null>(null);
 
   /**
-   * How the last save attempt ended, tagged by document like the draft above.
+   * How the last save attempt ended — tagged with the document *and the exact
+   * text* the host was handed.
    *
    * The host reports success or failure and nothing else; turning that into
    * the state the badge and the Save control read is this route's job, in the
    * same way it turns an accepted diff into session state.
+   *
+   * The text is what makes the outcome safe to apply late. A slow host can
+   * resolve after the user has typed again, and an outcome that only knew
+   * *which document* it belonged to would then report "saved" over text that
+   * was never written — disabling Save and inviting the author to close a file
+   * with unsaved work in it. Carrying the text means the outcome applies only
+   * while the document still holds it.
    */
   const [saveResult, setSaveResult] = useState<{
     key: DocumentFixtureKey;
+    text: string;
     state: SaveState;
   } | null>(null);
 
@@ -107,7 +116,32 @@ function WorkspacePage() {
   const settledText = settled?.key === documentKey ? settled.text : null;
   const draftText = draft?.key === documentKey ? draft.text : null;
   const liveCursor = cursor?.key === documentKey ? cursor : null;
-  const liveSaveState = saveResult?.key === documentKey ? saveResult.state : null;
+
+  /**
+   * The text a save or an export should carry: the newest thing the author has
+   * typed, falling back to the fixture's own source for an untouched document.
+   *
+   * Draft before settled, deliberately. `settled` lags the editor by
+   * `SETTLE_MS` so the preview is not rebuilt from half-typed syntax, but that
+   * debounce is about *rendering* — saving the settled text would silently drop
+   * whatever was typed in the last third of a second, and a save that quietly
+   * loses keystrokes is worse than no save at all.
+   *
+   * Derived from the fixture rather than from the `document` memo below,
+   * because that memo now depends on this: the saved-text comparison is what
+   * decides the model's `saveState`.
+   */
+  const currentText = draftText ?? settledText ?? documentText(fixture);
+
+  /**
+   * The outcome still describes what is on screen. Any later edit moves
+   * `currentText` on and the outcome stops applying, so the document falls
+   * back to "unsaved" — which is the truth, because the newer text was never
+   * written. Undoing back to the saved text makes it apply again, which is
+   * also the truth: that text is what the host has.
+   */
+  const liveSaveState =
+    saveResult?.key === documentKey && saveResult.text === currentText ? saveResult.state : null;
 
   const [failures, setFailures] = useState<RenderFailures>(new Map());
 
@@ -201,18 +235,6 @@ function WorkspacePage() {
     return liveSaveState === null ? withCursor : { ...withCursor, saveState: liveSaveState };
   }, [fixture, settledText, liveCursor, liveSaveState, failures]);
 
-  /**
-   * The text a save or an export should carry: the draft if there is one, and
-   * the model's text otherwise.
-   *
-   * Draft first, deliberately. `settled` lags the editor by `SETTLE_MS` so the
-   * preview is not rebuilt from half-typed syntax, but that debounce is about
-   * *rendering* — saving the settled text would silently drop whatever was
-   * typed in the last third of a second, and a save that quietly loses
-   * keystrokes is worse than no save at all. An untouched document has no
-   * draft and falls through to the model, which is the fixture's own text.
-   */
-  const currentText = draftText ?? documentText(document);
   const { fileName } = document;
 
   /**
@@ -224,13 +246,15 @@ function WorkspacePage() {
   const onSave = useMemo(() => {
     if (!saveDocument) return undefined;
     return () => {
-      setSaveResult({ key: documentKey, state: "saving" });
-      // Two callbacks rather than `.catch`: the outcome is tagged with the
-      // document that was saved, so switching documents mid-write cannot land
-      // one file's result on another's badge.
+      // `currentText` is captured once, here, and every outcome below is
+      // tagged with that same value — so what the host was given and what the
+      // badge later claims about it cannot disagree.
+      setSaveResult({ key: documentKey, text: currentText, state: "saving" });
+      // Two callbacks rather than `.catch`, so a rejection is handled where
+      // the success is and neither can escape as an unhandled rejection.
       void saveDocument(currentText).then(
-        () => setSaveResult({ key: documentKey, state: "saved" }),
-        () => setSaveResult({ key: documentKey, state: "error" }),
+        () => setSaveResult({ key: documentKey, text: currentText, state: "saved" }),
+        () => setSaveResult({ key: documentKey, text: currentText, state: "error" }),
       );
     };
   }, [saveDocument, currentText, documentKey]);
@@ -282,12 +306,10 @@ function WorkspacePage() {
         session={activeSession}
         onSave={onSave}
         onExport={onExport}
-        onEdit={(text) => {
-          setDraft({ key: documentKey, text });
-          // A keystroke makes any earlier outcome stale — the document is
-          // unsaved again, whatever the last write reported.
-          setSaveResult(null);
-        }}
+        // No need to clear `saveResult` here: it is matched against the text
+        // on screen, so a keystroke stops it applying on its own. Clearing as
+        // well would be a second mechanism for one rule.
+        onEdit={(text) => setDraft({ key: documentKey, text })}
         onCursorChange={(next) => setCursor({ key: documentKey, ...next })}
         onRenderDiagnostic={reportRenderDiagnostic}
         onAskAgent={(blockId) => setSession({ ...activeSession, contextBlockId: blockId })}
