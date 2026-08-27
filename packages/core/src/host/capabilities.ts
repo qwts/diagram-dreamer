@@ -89,6 +89,15 @@ export type ExportArtifact =
   // naming the buffer costs nothing and removes the cast from every consumer.
   | (ExportArtifactBase & { format: "png"; contents: Uint8Array<ArrayBuffer> });
 
+/**
+ * The formats above, addressable on their own.
+ *
+ * A shell offering one control per format needs to name a format without
+ * carrying its payload. Derived from the union rather than written out again,
+ * so the two cannot drift into disagreeing about what a format is.
+ */
+export type ExportFormat = ExportArtifact["format"];
+
 export interface HostCapabilities {
   /**
    * Let the user choose a document and return it, or `null` if they cancelled.

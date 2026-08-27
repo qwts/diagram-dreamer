@@ -28,6 +28,7 @@ export type {
   DiagramBlockState,
   DiffPreview,
   DocumentModel,
+  ExportFormat,
   PermissionRequest,
   PermissionResolution,
   PlanStepStatus,

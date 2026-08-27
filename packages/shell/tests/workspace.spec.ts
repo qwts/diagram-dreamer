@@ -1,6 +1,6 @@
 import { test, expect, type ConsoleMessage, type Page } from "@playwright/test";
 
-import { fixtureStates, ALWAYS_PRESENT } from "./fixtures";
+import { fixtureStates, documentFixtureKeys, ALWAYS_PRESENT } from "./fixtures";
 
 /**
  * Per CLAUDE.md Phase 2: for each `?state=` fixture — renders, no console
@@ -154,24 +154,40 @@ test("diagrams pan by keyboard, and fit restores both axes", async ({ page }) =>
   await expect(zoomLabel).not.toContainText("Zoom 100 percent");
 });
 
-test("the save control tracks save state", async ({ page }) => {
-  // SPEC §8 lists save among the MVP file operations. SaveStateBadge reports
-  // the state; this is the affordance that acts on it.
-  const save = () => page.getByTestId("workspace.toolbar.save");
+/**
+ * This replaces a test that asserted Save was *enabled* on an unsaved document
+ * — which it was, and which was the bug: `WorkspaceLayout` accepted no `onSave`
+ * at all, so the control was live and inert and the gate called that correct.
+ *
+ * What is left here is the part that is true under any host. Whether Save is
+ * enabled now depends on whether the host supplied `saveDocument`, and the two
+ * hosts answer differently on purpose, so that assertion moved into each
+ * host's own `tests/capabilities.spec.ts`, where a host can be named. The
+ * shape of the toolbar is host-neutral and stays here.
+ */
+test("the document actions keep the same shape on every document state", async ({ page }) => {
+  const shapeOf = async (state: string) => {
+    await page.goto(`/?state=${state}`);
+    await expect(page.getByTestId("workspace.toolbar.root")).toBeVisible();
+    return page
+      .getByTestId("workspace.toolbar.root")
+      .locator("button[data-testid]")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-testid")));
+  };
 
-  // `multi` is unsaved — actionable, and named plainly.
-  await page.goto("/?state=multi-idle");
-  await expect(save()).toBeEnabled();
-  await expect(save()).toHaveAccessibleName("Save document");
+  const [first, ...rest] = documentFixtureKeys;
+  const baseline = await shapeOf(`${first}-idle`);
 
-  // `empty` is saved — still present, but nothing to do, and it says so rather
-  // than leaving an unexplained dead control.
-  await page.goto("/?state=empty-idle");
-  await expect(save()).toBeDisabled();
-  await expect(save()).toHaveAccessibleName("No unsaved changes");
+  // Named explicitly so a regression that drops both reads as a missing
+  // control rather than as two identically empty toolbars agreeing.
+  expect(baseline).toContain("workspace.toolbar.save");
+  expect(baseline).toContain("workspace.toolbar.export-menu");
 
-  // `failed` carries saveState "error" — the retry path, not a dead end.
-  await page.goto("/?state=failed-idle");
-  await expect(save()).toBeEnabled();
-  await expect(save()).toHaveAccessibleName("Retry saving document");
+  // Controls are disabled, never removed. That is what keeps the toolbar's
+  // roving focus positional: hiding one would renumber every control after it,
+  // so the same arrow keys would reach different actions depending on the
+  // document — or on the host (CLAUDE.md invariant 7).
+  for (const key of rest) {
+    expect(await shapeOf(`${key}-idle`), `toolbar shape differs on ${key}`).toEqual(baseline);
+  }
 });

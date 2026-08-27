@@ -75,7 +75,15 @@ export interface DocumentModel {
   filePath: string;
   saveState: SaveState;
   lineCount: number;
-  /** Placeholder source shown in the editor frame until CodeMirror mounts. */
+  /**
+   * The document's lines, in order — every one of them, not a prefix.
+   *
+   * It is what the editor frame shows before CodeMirror mounts, which is where
+   * the name comes from, but it is *complete* and load-bearing: `documentText`
+   * joins it back into the text handed to `saveDocument` and to a markdown
+   * export. Truncating it here would silently truncate a saved file, so this
+   * array must stay the whole document even when only a screenful is drawn.
+   */
   sourcePreview: string[];
   blocks: DiagramBlock[];
   diagnostics: Diagnostic[];
@@ -176,8 +184,18 @@ export type {
 export { PROTOCOL_VERSION } from "./render/protocol";
 
 /** Document model (SPEC §5). Pure functions of text; no I/O. */
-export { DEFAULT_MERMAID_VERSION, parseDocument, toDocumentModel } from "./document/parse";
+export {
+  DEFAULT_MERMAID_VERSION,
+  documentText,
+  parseDocument,
+  toDocumentModel,
+} from "./document/parse";
 export type { DocumentIdentity, ParsedDocument, ParseOptions } from "./document/parse";
 
 /** Host contract (SPEC §4). What a host can do, and so what the shell may offer. */
-export type { ExportArtifact, HostCapabilities, OpenedDocument } from "./host/capabilities";
+export type {
+  ExportArtifact,
+  ExportFormat,
+  HostCapabilities,
+  OpenedDocument,
+} from "./host/capabilities";

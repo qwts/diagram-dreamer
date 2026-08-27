@@ -20,6 +20,12 @@ export const ALWAYS_PRESENT = [
   "workspace.toolbar.root",
   "workspace.toolbar.file-name",
   "workspace.toolbar.save-state",
+  // The document actions are present under every host, whatever that host can
+  // do — a capability it lacks disables the control and explains it, never
+  // removes it (#27). Listing them here is what makes "never removes it" a
+  // gate rather than a comment.
+  "workspace.toolbar.save",
+  "workspace.toolbar.export-menu",
   "workspace.status-bar.root",
   "workspace.status-bar.cursor-position",
   "workspace.status-bar.diagnostics-count",

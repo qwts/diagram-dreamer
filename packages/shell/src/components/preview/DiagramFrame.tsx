@@ -224,11 +224,22 @@ export function DiagramFrame({
           data-testid={testIds.preview.hoverToolbar}
           className="opacity-100 vellum-motion transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
         >
+          {/*
+           * The three controls below act only if someone above supplied a
+           * handler, so an absent handler disables them and says so — the same
+           * rule the toolbar's Save and Export follow, and for the same
+           * reason: a control that responds to a click by doing nothing is
+           * worse than one that explains itself.
+           *
+           * Today all three are absent. Copy has no owner yet; SVG and PNG
+           * need rendered output the sandbox protocol has no way to return.
+           */}
           <VellumButton
             variant="ghost"
             size="icon"
-            aria-label={t("preview.frame.copy")}
+            aria-label={onCopy ? t("preview.frame.copy") : t("preview.frame.copyUnavailable")}
             data-testid={testIds.preview.copy}
+            disabled={!onCopy}
             onClick={() => onCopy?.(block.id)}
           >
             <Copy className="size-4" aria-hidden="true" />
@@ -236,8 +247,11 @@ export function DiagramFrame({
           <VellumButton
             variant="ghost"
             size="icon"
-            aria-label={t("preview.frame.exportSvg")}
+            aria-label={
+              onExportSvg ? t("preview.frame.exportSvg") : t("preview.frame.exportSvgUnavailable")
+            }
             data-testid={testIds.preview.exportSvg}
+            disabled={!onExportSvg}
             onClick={() => onExportSvg?.(block.id)}
           >
             <FileCode2 className="size-4" aria-hidden="true" />
@@ -245,8 +259,11 @@ export function DiagramFrame({
           <VellumButton
             variant="ghost"
             size="icon"
-            aria-label={t("preview.frame.exportPng")}
+            aria-label={
+              onExportPng ? t("preview.frame.exportPng") : t("preview.frame.exportPngUnavailable")
+            }
             data-testid={testIds.preview.exportPng}
+            disabled={!onExportPng}
             onClick={() => onExportPng?.(block.id)}
           >
             <FileImage className="size-4" aria-hidden="true" />
